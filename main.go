@@ -1,7 +1,18 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
+
+// * denotes a pointer
+func handlerFunc(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "<h1>Welcom to my awesome site!</h1>")
+}
 
 func main() {
-	fmt.Println("Hello, world!")
+	// routes requests to function
+	http.HandleFunc("/", handlerFunc)
+	// starts server -- my container exposes 9000 by default
+	http.ListenAndServe(":9000", nil) // nil uses what is declared above
 }

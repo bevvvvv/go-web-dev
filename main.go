@@ -7,6 +7,7 @@ import (
 
 // * denotes a pointer
 func handlerFunc(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprint(w, "<h1>Welcom to my awesome site!</h1>")
 }
 

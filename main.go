@@ -25,6 +25,7 @@ func faq(w http.ResponseWriter, r *http.Request) {
 	<p>Yes I did.</p>`)
 }
 
+// custom NotFoundHandler
 type MyNotFound struct{}
 
 func (nf MyNotFound) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +34,8 @@ func (nf MyNotFound) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	<p>This is not the page you were looking for.</p>
 	<p>For assistance please <a href="/contact">contact support</a>.</p>`)
 }
+
+// http.HandlerFunc(function here) - can be used instead of defining custom class.
 
 func main() {
 	r := mux.NewRouter()

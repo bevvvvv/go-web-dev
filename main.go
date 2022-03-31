@@ -3,26 +3,25 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
-// * denotes a pointer
-func handlerFunc(w http.ResponseWriter, r *http.Request) {
+func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if r.URL.Path == "/" {
-		fmt.Fprint(w, "<h1>Welcom to my awesome site!</h1>")
-	} else if r.URL.Path == "/contact" {
-		fmt.Fprint(w, `To get in touch, please send an email to <a 
+	fmt.Fprint(w, "<h1>Welcome to my awesome site!</h1>")
+}
+
+func contact(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprint(w, `To get in touch, please send an email to <a 
 		href="mailto:support@lenslocked.com">support@lenslocked.com</a>.`)
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, `<h1>We could not find the page you are looking for :(</h1>
-			<p>Please email us if you keep being sent to an invalid page.</p>`)
-	}
 }
 
 func main() {
-	// routes requests to function
-	http.HandleFunc("/", handlerFunc)
+	r := mux.NewRouter()
+	r.HandleFunc("/", home)
+	r.HandleFunc("/contact", contact)
 	// starts server -- my container exposes 9000 by default
-	http.ListenAndServe(":9000", nil) // nil uses what is declared above
+	http.ListenAndServe(":9000", r) // nil uses what is declared above
 }

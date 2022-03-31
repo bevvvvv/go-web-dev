@@ -29,6 +29,7 @@ func faq(w http.ResponseWriter, r *http.Request) {
 type MyNotFound struct{}
 
 func (nf MyNotFound) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprint(w, `<h1>404 Error Not Found</h1>
 	<p>This is not the page you were looking for.</p>

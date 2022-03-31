@@ -25,11 +25,21 @@ func faq(w http.ResponseWriter, r *http.Request) {
 	<p>Yes I did.</p>`)
 }
 
+type MyNotFound struct{}
+
+func (nf MyNotFound) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprint(w, `<h1>404 Error Not Found</h1>
+	<p>This is not the page you were looking for.</p>
+	<p>For assistance please <a href="/contact">contact support</a>.</p>`)
+}
+
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", home)
 	r.HandleFunc("/contact", contact)
 	r.HandleFunc("/faq", faq)
+	r.NotFoundHandler = MyNotFound{}
 	// starts server -- my container exposes 9000 by default
 	http.ListenAndServe(":9000", r) // nil uses what is declared above
 }

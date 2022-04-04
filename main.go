@@ -2,14 +2,37 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
+type User struct {
+	Name     string
+	Age      float64
+	Sports   []string
+	Children map[string]string
+}
+
 func home(w http.ResponseWriter, r *http.Request) {
+	// set content type
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, "<h1>Welcome to my awesome site!</h1>")
+
+	// load template
+	t, err := template.ParseFiles("templates/hello.gohtml")
+	if err != nil {
+		panic(err)
+	}
+
+	// send data
+	data := User{
+		Name:     "John Smith",
+		Age:      34.5,
+		Sports:   []string{"Basketball", "Volleyball", "Baseball"},
+		Children: map[string]string{"Daughter": "Lisa", "Son": "Bradley"},
+	}
+	t.Execute(w, data)
 }
 
 func contact(w http.ResponseWriter, r *http.Request) {
@@ -39,11 +62,13 @@ func (nf MyNotFound) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // http.HandlerFunc(function here) - can be used instead of defining custom class.
 
 func main() {
+	// create mux router
 	r := mux.NewRouter()
 	r.HandleFunc("/", home)
 	r.HandleFunc("/contact", contact)
 	r.HandleFunc("/faq", faq)
 	r.NotFoundHandler = MyNotFound{}
+
 	// starts server -- my container exposes 9000 by default
-	http.ListenAndServe(":9000", r) // nil uses what is declared above
+	http.ListenAndServe(":9000", r)
 }

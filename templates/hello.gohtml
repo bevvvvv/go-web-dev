@@ -1,0 +1,15 @@
+<h1>Hello, {{ .Name }}</h1>
+<h2>Welcome to my awesome site!</h2>
+<p>You are {{ .Age }} years old.</p>
+<p>You play
+    {{ range $i, $e := .Sports }}
+        {{.}}
+    {{ end }}
+.</p>
+{{ range $i, $e := .Children }}
+    {{ if eq $i "Daughter"}}
+        <p>You have a daughter named {{ $e }}</p>
+    {{ else }}
+        <p>You have a son named {{ $e }}</p>
+    {{ end }}
+{{ end }}

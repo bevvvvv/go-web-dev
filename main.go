@@ -42,11 +42,17 @@ func (nf MyNotFound) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// load templates
 	var err error
-	homeTemplate, err = homeTemplate.ParseFiles("views/home.gohtml")
+	homeTemplate, err = homeTemplate.ParseFiles(
+		"views/home.gohtml",
+		"views/layouts/footer.gohtml",
+	)
 	if err != nil {
 		panic(err)
 	}
-	contactTemplate, err = contactTemplate.ParseFiles("views/contact.gohtml")
+	contactTemplate, err = contactTemplate.ParseFiles(
+		"views/contact.gohtml",
+		"views/layouts/footer.gohtml",
+	)
 	if err != nil {
 		panic(err)
 	}

@@ -16,14 +16,16 @@ var (
 func home(w http.ResponseWriter, r *http.Request) {
 	// set content type
 	w.Header().Set("Content-Type", "text/html")
-	if err := homeView.Template.Execute(w, nil); err != nil {
+	err := homeView.Template.ExecuteTemplate(w, homeView.Layout, nil)
+	if err != nil {
 		panic(err)
 	}
 }
 
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	if err := contactView.Template.Execute(w, nil); err != nil {
+	err := contactView.Template.ExecuteTemplate(w, contactView.Layout, nil)
+	if err != nil {
 		panic(err)
 	}
 }
@@ -41,8 +43,8 @@ func (nf MyNotFound) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// load views
-	homeView = views.NewView("views/home.gohtml")
-	contactView = views.NewView("views/contact.gohtml")
+	homeView = views.NewView("bootstrap", "views/home.gohtml")
+	contactView = views.NewView("bootstrap", "views/contact.gohtml")
 
 	// create mux router
 	r := mux.NewRouter()

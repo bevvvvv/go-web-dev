@@ -1,4 +1,4 @@
-module go-web-dev/main
+module go-web-dev
 
 go 1.17
 

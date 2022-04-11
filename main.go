@@ -1,7 +1,8 @@
 package main
 
 import (
-	"go-web-dev/main/views"
+	"go-web-dev/controllers"
+	"go-web-dev/views"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -10,7 +11,6 @@ import (
 var (
 	homeView    *views.View
 	contactView *views.View
-	signupView  *views.View
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -21,21 +21,18 @@ func contact(w http.ResponseWriter, r *http.Request) {
 	must(contactView.Render(w, nil))
 }
 
-func signup(w http.ResponseWriter, r *http.Request) {
-	must(signupView.Render(w, nil))
-}
-
 func main() {
 	// load views
 	homeView = views.NewView("bootstrap", "views/home.gohtml")
 	contactView = views.NewView("bootstrap", "views/contact.gohtml")
-	signupView = views.NewView("bootstrap", "views/signup.gohtml")
+	// init controllers
+	userController := controllers.NewUserController()
 
-	// create mux router
+	// create mux router - routes requests to controllers
 	r := mux.NewRouter()
 	r.HandleFunc("/", home)
 	r.HandleFunc("/contact", contact)
-	r.HandleFunc("/signup", signup)
+	r.HandleFunc("/signup", userController.New)
 
 	// starts server -- my container exposes 9000 by default
 	http.ListenAndServe(":9000", r)

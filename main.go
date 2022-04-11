@@ -30,9 +30,10 @@ func main() {
 
 	// create mux router - routes requests to controllers
 	r := mux.NewRouter()
-	r.HandleFunc("/", home)
-	r.HandleFunc("/contact", contact)
-	r.HandleFunc("/signup", userController.New)
+	r.HandleFunc("/", home).Methods("GET")
+	r.HandleFunc("/contact", contact).Methods("GET")
+	r.HandleFunc("/signup", userController.New).Methods("GET")
+	r.HandleFunc("/signup", userController.Create).Methods("POST")
 
 	// starts server -- my container exposes 9000 by default
 	http.ListenAndServe(":9000", r)

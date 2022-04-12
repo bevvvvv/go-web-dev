@@ -10,7 +10,7 @@ import (
 // Panics if templates not parsed correctly. Use at setup only.
 func NewUserController() *UserController {
 	return &UserController{
-		NewUserView: views.NewView("bootstrap", "views/users/new.gohtml"),
+		NewUserView: views.NewView("bootstrap", "users/new"),
 	}
 }
 

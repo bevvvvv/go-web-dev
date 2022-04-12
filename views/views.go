@@ -28,6 +28,12 @@ type View struct {
 	Layout   string
 }
 
+func (thisView *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := thisView.Render(w, nil); err != nil {
+		panic(err)
+	}
+}
+
 func (thisView *View) Render(w http.ResponseWriter, data interface{}) error {
 	w.Header().Set("Content-Type", "text/html")
 	return thisView.Template.ExecuteTemplate(w, thisView.Layout, data)

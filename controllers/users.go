@@ -22,8 +22,8 @@ type UserController struct {
 // a user can create a new user account.
 //
 // GET /signup
-func (u *UserController) New(w http.ResponseWriter, r *http.Request) {
-	u.NewUserView.Render(w, nil)
+func (thisUserController *UserController) New(w http.ResponseWriter, r *http.Request) {
+	thisUserController.NewUserView.Render(w, nil)
 }
 
 type SignupForm struct {

@@ -31,5 +31,9 @@ func (u *UserController) New(w http.ResponseWriter, r *http.Request) {
 //
 // POST /signup
 func (u *UserController) Create(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "This is a temporary response.")
+	// need to parse to use PostForm field
+	if err := r.ParseForm(); err != nil {
+		panic(err)
+	}
+	fmt.Fprintln(w, r.PostForm)
 }

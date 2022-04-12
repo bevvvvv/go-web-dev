@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go-web-dev/views"
 	"net/http"
+
+	"github.com/gorilla/schema"
 )
 
 // NewUsers is used to create a new Users controller.
@@ -26,6 +28,11 @@ func (u *UserController) New(w http.ResponseWriter, r *http.Request) {
 	u.NewUserView.Render(w, nil)
 }
 
+type SignupForm struct {
+	Email    string `schema:"email"`
+	Password string `schema:"password"`
+}
+
 // Create is used to process the signup form.
 // Runs when a user submits the form.
 //
@@ -35,5 +42,12 @@ func (u *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		panic(err)
 	}
-	fmt.Fprintln(w, r.PostForm)
+
+	dec := schema.NewDecoder()
+	var form SignupForm
+	if err := dec.Decode(&form, r.PostForm); err != nil {
+		panic(err)
+	}
+	fmt.Fprintln(w, form.Email)
+	fmt.Fprintln(w, form.Password)
 }

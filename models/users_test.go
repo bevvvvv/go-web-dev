@@ -78,3 +78,23 @@ func TestUpdateUser(t *testing.T) {
 		t.Errorf("Expected email michael@michaelscottpaperco.com. Received %s", dbUser.Email)
 	}
 }
+
+func TestDeleteUser(t *testing.T) {
+	userService, err := testingUserService()
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := User{
+		Name:  "Michael Scott",
+		Email: "michael@dundermifflin.net",
+	}
+	err = userService.Create(&user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	userService.Delete(1)
+	dbUser, err := userService.ById(user.ID)
+	if dbUser.Name != "" {
+		t.Errorf("Expected user to be deleted. Found %s", dbUser.Name)
+	}
+}

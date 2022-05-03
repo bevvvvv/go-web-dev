@@ -31,19 +31,36 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 // 3 - nil, otherError - db is having issue
 func (userService *UserService) ById(id uint) (*User, error) {
 	var user User
-	err := userService.db.Where("id = ?", id).First(&user).Error
+	db := userService.db.Where("id = ?", id)
+	err := first(db, &user)
+	return &user, err
+}
+
+func (userService *UserService) ByEmail(email string) (*User, error) {
+	var user User
+	db := userService.db.Where("email = ?", email)
+	err := first(db, &user)
+	return &user, err
+}
+
+func first(db *gorm.DB, user *User) error {
+	err := db.First(user).Error
 	switch err {
 	case nil:
-		return &user, nil
+		return nil
 	case gorm.ErrRecordNotFound:
-		return nil, ErrNotFound
+		return ErrNotFound
 	default:
-		return nil, err
+		return err
 	}
 }
 
 func (userService *UserService) Create(user *User) error {
 	return userService.db.Create(user).Error
+}
+
+func (userService *UserService) Update(user *User) error {
+	return userService.db.Save(user).Error
 }
 
 // Closes the UserService database connection

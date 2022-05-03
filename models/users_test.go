@@ -51,3 +51,30 @@ func TestCreateUser(t *testing.T) {
 		t.Errorf("Expected recent creation. Received %s", user.UpdatedAt)
 	}
 }
+
+func TestUpdateUser(t *testing.T) {
+	userService, err := testingUserService()
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := User{
+		Name:  "Michael Scott",
+		Email: "michael@dundermifflin.net",
+	}
+	err = userService.Create(&user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	user.Email = "michael@michaelscottpaperco.com"
+	err = userService.Update(&user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dbUser, err := userService.ById(user.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dbUser.Email != user.Email {
+		t.Errorf("Expected email michael@michaelscottpaperco.com. Received %s", dbUser.Email)
+	}
+}

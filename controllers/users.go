@@ -45,8 +45,9 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 	}
 
 	user := models.User{
-		Name:  form.Name,
-		Email: form.Email,
+		Name:     form.Name,
+		Email:    form.Email,
+		Password: form.Password,
 	}
 	if err := userController.userSerivce.Create(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

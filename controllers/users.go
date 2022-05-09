@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"go-web-dev/models"
 	"go-web-dev/views"
 	"net/http"
@@ -11,21 +12,15 @@ import (
 func NewUserController(userService *models.UserService) *UserController {
 	return &UserController{
 		NewUserView: views.NewView("bootstrap", "users/new"),
+		LoginView:   views.NewView("bootstrap", "users/login"),
 		userSerivce: userService,
 	}
 }
 
 type UserController struct {
 	NewUserView *views.View
+	LoginView   *views.View
 	userSerivce *models.UserService
-}
-
-// New is used to render the form where
-// a user can create a new user account.
-//
-// GET /signup
-func (thisUserController *UserController) New(w http.ResponseWriter, r *http.Request) {
-	thisUserController.NewUserView.Render(w, nil)
 }
 
 type SignupForm struct {
@@ -52,4 +47,21 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 	if err := userController.userSerivce.Create(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+type LoginForm struct {
+	Email    string `schema:"email"`
+	Password string `schema:"password"`
+}
+
+// Login is used to verify the email and password.
+//
+// POST /login
+func (userController *UserController) Login(w http.ResponseWriter, r *http.Request) {
+	form := LoginForm{}
+	if err := parseForm(r, &form); err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintln(w, form)
 }

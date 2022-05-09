@@ -63,5 +63,16 @@ func (userController *UserController) Login(w http.ResponseWriter, r *http.Reque
 		panic(err)
 	}
 
+	user, err := userController.userSerivce.Authenticate(form.Email, form.Password)
+	switch err {
+	case models.ErrNotFound:
+		fmt.Fprintln(w, "Invalid email address")
+	case models.ErrInvalidPassword:
+		fmt.Fprintln(w, "Incorrect password")
+	case nil:
+		fmt.Fprintln(w, user)
+	default:
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	fmt.Fprintln(w, form)
 }

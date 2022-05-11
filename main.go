@@ -40,6 +40,7 @@ func main() {
 	r.HandleFunc("/signup", userController.Create).Methods("POST")
 	r.Handle("/login", userController.LoginView).Methods("GET")
 	r.HandleFunc("/login", userController.Login).Methods("POST")
+	r.HandleFunc("/cookietest", userController.CookieTest).Methods("GET")
 
 	// starts server -- my container exposes 9000 by default
 	http.ListenAndServe(":9000", r)

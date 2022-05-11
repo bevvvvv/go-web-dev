@@ -47,6 +47,8 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 	if err := userController.userSerivce.Create(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	signIn(w, &user)
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
 type LoginForm struct {
@@ -73,14 +75,19 @@ func (userController *UserController) Login(w http.ResponseWriter, r *http.Reque
 		default:
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+		return
 	}
 
+	signIn(w, user)
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
+}
+
+func signIn(w http.ResponseWriter, user *models.User) {
 	cookie := http.Cookie{
 		Name:  "email",
 		Value: user.Email,
 	}
 	http.SetCookie(w, &cookie)
-	fmt.Fprintln(w, user)
 }
 
 func (userController *UserController) CookieTest(w http.ResponseWriter, r *http.Request) {

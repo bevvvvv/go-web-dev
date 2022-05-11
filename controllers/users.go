@@ -64,15 +64,21 @@ func (userController *UserController) Login(w http.ResponseWriter, r *http.Reque
 	}
 
 	user, err := userController.userSerivce.Authenticate(form.Email, form.Password)
-	switch err {
-	case models.ErrNotFound:
-		fmt.Fprintln(w, "Invalid email address")
-	case models.ErrInvalidPassword:
-		fmt.Fprintln(w, "Incorrect password")
-	case nil:
-		fmt.Fprintln(w, user)
-	default:
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err != nil {
+		switch err {
+		case models.ErrNotFound:
+			fmt.Fprintln(w, "Invalid email address")
+		case models.ErrInvalidPassword:
+			fmt.Fprintln(w, "Incorrect password")
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
-	fmt.Fprintln(w, form)
+
+	cookie := http.Cookie{
+		Name:  "email",
+		Value: user.Email,
+	}
+	http.SetCookie(w, &cookie)
+	fmt.Fprintln(w, user)
 }

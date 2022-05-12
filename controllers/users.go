@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"go-web-dev/models"
+	"go-web-dev/rand"
 	"go-web-dev/views"
 	"net/http"
 )
@@ -13,14 +14,14 @@ func NewUserController(userService *models.UserService) *UserController {
 	return &UserController{
 		NewUserView: views.NewView("bootstrap", "users/new"),
 		LoginView:   views.NewView("bootstrap", "users/login"),
-		userSerivce: userService,
+		userService: userService,
 	}
 }
 
 type UserController struct {
 	NewUserView *views.View
 	LoginView   *views.View
-	userSerivce *models.UserService
+	userService *models.UserService
 }
 
 type SignupForm struct {
@@ -44,10 +45,14 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 		Email:    form.Email,
 		Password: form.Password,
 	}
-	if err := userController.userSerivce.Create(&user); err != nil {
+	if err := userController.userService.Create(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	signIn(w, &user)
+	err := userController.signIn(w, &user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
@@ -65,7 +70,7 @@ func (userController *UserController) Login(w http.ResponseWriter, r *http.Reque
 		panic(err)
 	}
 
-	user, err := userController.userSerivce.Authenticate(form.Email, form.Password)
+	user, err := userController.userService.Authenticate(form.Email, form.Password)
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
@@ -78,23 +83,44 @@ func (userController *UserController) Login(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	signIn(w, user)
-	http.Redirect(w, r, "/cookietest", http.StatusFound)
-}
-
-func signIn(w http.ResponseWriter, user *models.User) {
-	cookie := http.Cookie{
-		Name:  "email",
-		Value: user.Email,
-	}
-	http.SetCookie(w, &cookie)
-}
-
-func (userController *UserController) CookieTest(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("email")
+	err = userController.signIn(w, user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintln(w, "Email is: ", cookie.Value)
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
+}
+
+func (userController *UserController) signIn(w http.ResponseWriter, user *models.User) error {
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+		err = userController.userService.Update(user)
+		if err != nil {
+			return err
+		}
+	}
+	cookie := http.Cookie{
+		Name:  "remember_token",
+		Value: user.Remember,
+	}
+	http.SetCookie(w, &cookie)
+	return nil
+}
+
+func (userController *UserController) CookieTest(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("remember_token")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	user, err := userController.userService.ByRemember(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintln(w, "Email is: ", user.Email)
 }

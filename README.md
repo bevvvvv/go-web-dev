@@ -1,4 +1,4 @@
-# go-web-dev: Lens Locked
+# go-web-dev
 
 Web Development with Go online course result.
 

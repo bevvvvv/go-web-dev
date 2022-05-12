@@ -2,6 +2,8 @@ package models
 
 import (
 	"errors"
+	"go-web-dev/hash"
+	"go-web-dev/rand"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -15,18 +17,23 @@ var (
 )
 
 type UserService struct {
-	db *gorm.DB
+	db   *gorm.DB
+	hmac hash.HMAC
 }
 
 const userPwPepper = "8#yQhWB$adFN"
+const hmacSecretKey = "secret-hmac-key"
 
 func NewUserService(connectionInfo string) (*UserService, error) {
 	db, err := gorm.Open("postgres", connectionInfo)
 	if err != nil {
 		return nil, err
 	}
+	db.LogMode(true)
+	hmac := hash.NewHMAC(hmacSecretKey)
 	return &UserService{
-		db: db,
+		db:   db,
+		hmac: hmac,
 	}, nil
 }
 
@@ -44,6 +51,14 @@ func (userService *UserService) ById(id uint) (*User, error) {
 func (userService *UserService) ByEmail(email string) (*User, error) {
 	var user User
 	db := userService.db.Where("email = ?", email)
+	err := first(db, &user)
+	return &user, err
+}
+
+func (userService *UserService) ByRemember(remember string) (*User, error) {
+	var user User
+	rememberHash := userService.hmac.Hash(remember)
+	db := userService.db.Where("remember_hash = ?", rememberHash)
 	err := first(db, &user)
 	return &user, err
 }
@@ -82,10 +97,31 @@ func (userService *UserService) Create(user *User) error {
 	}
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
+
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+	}
+	user.RememberHash = userService.hmac.Hash(user.Remember)
 	return userService.db.Create(user).Error
 }
 
 func (userService *UserService) Update(user *User) error {
+	if user.Password != "" {
+		pwBytes := []byte(user.Password + userPwPepper)
+		hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		user.PasswordHash = string(hashedBytes)
+		user.Password = ""
+	}
+	if user.Remember != "" {
+		user.RememberHash = userService.hmac.Hash(user.Remember)
+	}
 	return userService.db.Save(user).Error
 }
 
@@ -119,4 +155,6 @@ type User struct {
 	Email        string `gorm:"not null;unique_index"`
 	Password     string `gorm:"-"`
 	PasswordHash string `gorm:"not null"`
+	Remember     string `gorm:"-"`
+	RememberHash string `gorm:"not null;unique_index"`
 }

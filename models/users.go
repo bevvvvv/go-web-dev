@@ -13,14 +13,16 @@ import (
 )
 
 var (
-	ErrNotFound          = errors.New("models: resource not found")
-	ErrInvalidID         = errors.New("models: ID provided is not valid")
-	ErrInvalidEmail      = errors.New("models: Email address is not valid")
-	ErrRequiredEmail     = errors.New("models: Email address is required")
-	ErrTakenEmail        = errors.New("models: Email address is already taken")
-	ErrInvalidPassword   = errors.New("models: Password is not valid")
-	ErrRequiredPassword  = errors.New("models: Password is required")
-	ErrIncorrectPassword = errors.New("models: Incorrect password provided")
+	ErrNotFound             = errors.New("models: resource not found")
+	ErrInvalidID            = errors.New("models: ID provided is not valid")
+	ErrInvalidEmail         = errors.New("models: Email address is not valid")
+	ErrRequiredEmail        = errors.New("models: Email address is required")
+	ErrTakenEmail           = errors.New("models: Email address is already taken")
+	ErrInvalidPassword      = errors.New("models: Password is not valid")
+	ErrRequiredPassword     = errors.New("models: Password is required")
+	ErrIncorrectPassword    = errors.New("models: Incorrect password provided")
+	ErrInvalidRemeber       = errors.New("models: Remember token must be an adequate length")
+	ErrRequiredRememberHash = errors.New("models: Remember hash is required")
 )
 
 const userPwPepper = "8#yQhWB$adFN"
@@ -121,7 +123,9 @@ func (uValidator *userValidator) Create(user *User) error {
 		uValidator.hashPassword,
 		uValidator.requirePasswordHash,
 		uValidator.generateRemember,
+		uValidator.rememberLength,
 		uValidator.hashRemember,
+		uValidator.requireRememberHash,
 		uValidator.requireEmail,
 		uValidator.emailFormat,
 		uValidator.normalizeEmail,
@@ -137,7 +141,9 @@ func (uValidator *userValidator) Update(user *User) error {
 		uValidator.passwordLength,
 		uValidator.hashPassword,
 		uValidator.requirePasswordHash,
+		uValidator.rememberLength,
 		uValidator.hashRemember,
+		uValidator.requireRememberHash,
 		uValidator.requireEmail,
 		uValidator.emailFormat,
 		uValidator.normalizeEmail,
@@ -227,6 +233,27 @@ func (uValidator *userValidator) generateRemember(user *User) error {
 		return err
 	}
 	user.Remember = token
+	return nil
+}
+
+func (uValidator *userValidator) rememberLength(user *User) error {
+	if user.Remember == "" {
+		return nil
+	}
+	n, err := rand.Nbytes(user.Remember)
+	if err != nil {
+		return err
+	}
+	if n < 32 {
+		return ErrInvalidRemeber
+	}
+	return nil
+}
+
+func (uValidator *userValidator) requireRememberHash(user *User) error {
+	if user.RememberHash == "" {
+		return ErrRequiredRememberHash
+	}
 	return nil
 }
 

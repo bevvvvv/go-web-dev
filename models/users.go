@@ -4,6 +4,7 @@ import (
 	"errors"
 	"go-web-dev/hash"
 	"go-web-dev/rand"
+	"regexp"
 	"strings"
 
 	"github.com/jinzhu/gorm"
@@ -13,7 +14,9 @@ import (
 
 var (
 	ErrNotFound        = errors.New("models: resource not found")
-	ErrInvalidID       = errors.New("models: ID provided was invalid")
+	ErrInvalidID       = errors.New("models: ID provided is not valid")
+	ErrInvalidEmail    = errors.New("models: Email address is not valid")
+	ErrEmailRequired   = errors.New("models: Email address is required")
 	ErrInvalidPassword = errors.New("models: Incorrect password provided")
 )
 
@@ -46,10 +49,7 @@ func NewUserService(connectionInfo string) (UserService, error) {
 		return nil, err
 	}
 	return &userService{
-		UserDB: &userValidator{
-			UserDB: uGorm,
-			hmac:   hash.NewHMAC(hmacSecretKey),
-		},
+		UserDB: newUserValidator(uGorm, hash.NewHMAC(hmacSecretKey)),
 	}, nil
 }
 
@@ -77,7 +77,16 @@ var _ UserDB = &userValidator{}
 
 type userValidator struct {
 	UserDB
-	hmac hash.HMAC
+	hmac       hash.HMAC
+	emailRegex *regexp.Regexp
+}
+
+func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
+	return &userValidator{
+		UserDB:     udb,
+		hmac:       hmac,
+		emailRegex: regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
+	}
 }
 
 func (uValidator *userValidator) ByEmail(email string) (*User, error) {
@@ -108,6 +117,7 @@ func (uValidator *userValidator) Create(user *User) error {
 		uValidator.generateRemember,
 		uValidator.hashRemember,
 		uValidator.requireEmail,
+		uValidator.emailFormat,
 		uValidator.normalizeEmail); err != nil {
 		return err
 	}
@@ -120,6 +130,7 @@ func (uValidator *userValidator) Update(user *User) error {
 		uValidator.hashPassword,
 		uValidator.hashRemember,
 		uValidator.requireEmail,
+		uValidator.emailFormat,
 		uValidator.normalizeEmail); err != nil {
 		return err
 	}
@@ -199,7 +210,14 @@ func (uValidator *userValidator) normalizeEmail(user *User) error {
 
 func (uValidator *userValidator) requireEmail(user *User) error {
 	if user.Email == "" {
-		return errors.New("email address is required")
+		return ErrEmailRequired
+	}
+	return nil
+}
+
+func (uValidator *userValidator) emailFormat(user *User) error {
+	if !uValidator.emailRegex.MatchString(user.Email) {
+		return ErrInvalidEmail
 	}
 	return nil
 }

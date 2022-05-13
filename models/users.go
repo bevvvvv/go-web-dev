@@ -91,16 +91,9 @@ func (uValidator *userValidator) ByRemember(remember string) (*User, error) {
 }
 
 func (uValidator *userValidator) Create(user *User) error {
-	if user.Remember == "" {
-		token, err := rand.RememberToken()
-		if err != nil {
-			return err
-		}
-		user.Remember = token
-	}
-
 	if err := runUserValFuncs(user,
 		uValidator.hashPassword,
+		uValidator.generateRemember,
 		uValidator.hashRemember); err != nil {
 		return err
 	}
@@ -116,6 +109,13 @@ func (uValidator *userValidator) Update(user *User) error {
 	}
 
 	return uValidator.UserDB.Update(user)
+}
+
+func (uValidator *userValidator) Delete(id uint) error {
+	if id == 0 {
+		return ErrInvalidID
+	}
+	return uValidator.UserDB.Delete(id)
 }
 
 type userValFunc func(*User) error
@@ -151,11 +151,16 @@ func (uValidator *userValidator) hashRemember(user *User) error {
 	return nil
 }
 
-func (uValidator *userValidator) Delete(id uint) error {
-	if id == 0 {
-		return ErrInvalidID
+func (uValidator *userValidator) generateRemember(user *User) error {
+	if user.Remember != "" {
+		return nil
 	}
-	return uValidator.UserDB.Delete(id)
+	token, err := rand.RememberToken()
+	if err != nil {
+		return err
+	}
+	user.Remember = token
+	return nil
 }
 
 // UserDB is used to interact with users table.

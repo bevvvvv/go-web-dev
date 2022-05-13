@@ -13,12 +13,14 @@ import (
 )
 
 var (
-	ErrNotFound        = errors.New("models: resource not found")
-	ErrInvalidID       = errors.New("models: ID provided is not valid")
-	ErrInvalidEmail    = errors.New("models: Email address is not valid")
-	ErrEmailRequired   = errors.New("models: Email address is required")
-	ErrEmailTaken      = errors.New("models: Email address is already taken")
-	ErrInvalidPassword = errors.New("models: Incorrect password provided")
+	ErrNotFound          = errors.New("models: resource not found")
+	ErrInvalidID         = errors.New("models: ID provided is not valid")
+	ErrInvalidEmail      = errors.New("models: Email address is not valid")
+	ErrRequiredEmail     = errors.New("models: Email address is required")
+	ErrTakenEmail        = errors.New("models: Email address is already taken")
+	ErrInvalidPassword   = errors.New("models: Password is not valid")
+	ErrRequiredPassword  = errors.New("models: Password is required")
+	ErrIncorrectPassword = errors.New("models: Incorrect password provided")
 )
 
 const userPwPepper = "8#yQhWB$adFN"
@@ -66,7 +68,7 @@ func (uService *userService) Authenticate(email, password string) (*User, error)
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password+userPwPepper))
 	switch err {
 	case bcrypt.ErrMismatchedHashAndPassword:
-		return nil, ErrInvalidPassword
+		return nil, ErrIncorrectPassword
 	case nil:
 		return user, nil
 	default:
@@ -114,7 +116,10 @@ func (uValidator *userValidator) ByRemember(remember string) (*User, error) {
 
 func (uValidator *userValidator) Create(user *User) error {
 	if err := runUserValFuncs(user,
+		uValidator.requirePassword,
+		uValidator.passwordLength,
 		uValidator.hashPassword,
+		uValidator.requirePasswordHash,
 		uValidator.generateRemember,
 		uValidator.hashRemember,
 		uValidator.requireEmail,
@@ -129,7 +134,9 @@ func (uValidator *userValidator) Create(user *User) error {
 
 func (uValidator *userValidator) Update(user *User) error {
 	if err := runUserValFuncs(user,
+		uValidator.passwordLength,
 		uValidator.hashPassword,
+		uValidator.requirePasswordHash,
 		uValidator.hashRemember,
 		uValidator.requireEmail,
 		uValidator.emailFormat,
@@ -179,6 +186,30 @@ func (uValidator *userValidator) hashPassword(user *User) error {
 	return nil
 }
 
+func (uValidator *userValidator) passwordLength(user *User) error {
+	if user.Password == "" {
+		return nil
+	}
+	if len(user.Password) < 8 {
+		return ErrInvalidPassword
+	}
+	return nil
+}
+
+func (uValidator *userValidator) requirePassword(user *User) error {
+	if user.Password == "" {
+		return ErrRequiredPassword
+	}
+	return nil
+}
+
+func (uValidator *userValidator) requirePasswordHash(user *User) error {
+	if user.PasswordHash == "" {
+		return ErrRequiredPassword
+	}
+	return nil
+}
+
 func (uValidator *userValidator) hashRemember(user *User) error {
 	if user.Remember == "" {
 		return nil
@@ -213,7 +244,7 @@ func (uValidator *userValidator) normalizeEmail(user *User) error {
 
 func (uValidator *userValidator) requireEmail(user *User) error {
 	if user.Email == "" {
-		return ErrEmailRequired
+		return ErrRequiredEmail
 	}
 	return nil
 }
@@ -235,7 +266,7 @@ func (uValidator *userValidator) duplicateEmail(user *User) error {
 		}
 	}
 	if existingUser.ID != user.ID {
-		return ErrEmailTaken
+		return ErrTakenEmail
 	}
 	return nil
 }

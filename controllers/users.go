@@ -47,6 +47,7 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 	}
 	if err := userController.userService.Create(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	err := userController.signIn(w, &user)
 	if err != nil {

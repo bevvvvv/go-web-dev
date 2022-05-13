@@ -17,6 +17,7 @@ var (
 	ErrInvalidID       = errors.New("models: ID provided is not valid")
 	ErrInvalidEmail    = errors.New("models: Email address is not valid")
 	ErrEmailRequired   = errors.New("models: Email address is required")
+	ErrEmailTaken      = errors.New("models: Email address is already taken")
 	ErrInvalidPassword = errors.New("models: Incorrect password provided")
 )
 
@@ -118,7 +119,8 @@ func (uValidator *userValidator) Create(user *User) error {
 		uValidator.hashRemember,
 		uValidator.requireEmail,
 		uValidator.emailFormat,
-		uValidator.normalizeEmail); err != nil {
+		uValidator.normalizeEmail,
+		uValidator.duplicateEmail); err != nil {
 		return err
 	}
 
@@ -131,7 +133,8 @@ func (uValidator *userValidator) Update(user *User) error {
 		uValidator.hashRemember,
 		uValidator.requireEmail,
 		uValidator.emailFormat,
-		uValidator.normalizeEmail); err != nil {
+		uValidator.normalizeEmail,
+		uValidator.duplicateEmail); err != nil {
 		return err
 	}
 
@@ -218,6 +221,21 @@ func (uValidator *userValidator) requireEmail(user *User) error {
 func (uValidator *userValidator) emailFormat(user *User) error {
 	if !uValidator.emailRegex.MatchString(user.Email) {
 		return ErrInvalidEmail
+	}
+	return nil
+}
+
+func (uValidator *userValidator) duplicateEmail(user *User) error {
+	existingUser, err := uValidator.ByEmail(user.Email)
+	if err != nil {
+		if err == ErrNotFound {
+			return nil
+		} else {
+			return err
+		}
+	}
+	if existingUser.ID != user.ID {
+		return ErrEmailTaken
 	}
 	return nil
 }

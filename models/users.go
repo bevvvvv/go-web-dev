@@ -80,11 +80,25 @@ type userValidator struct {
 }
 
 func (uValidator *userValidator) ByRemember(remember string) (*User, error) {
-	rememberHash := uValidator.hmac.Hash(remember)
-	return uValidator.UserDB.ByRemember(rememberHash)
+	user := User{
+		Remember: remember,
+	}
+	if err := runUserValFuncs(&user,
+		uValidator.hashRemember); err != nil {
+		return nil, err
+	}
+	return uValidator.UserDB.ByRemember(user.RememberHash)
 }
 
 func (uValidator *userValidator) Create(user *User) error {
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+	}
+
 	if err := runUserValFuncs(user,
 		uValidator.hashPassword,
 		uValidator.hashRemember); err != nil {
@@ -96,13 +110,11 @@ func (uValidator *userValidator) Create(user *User) error {
 
 func (uValidator *userValidator) Update(user *User) error {
 	if err := runUserValFuncs(user,
-		uValidator.hashPassword); err != nil {
+		uValidator.hashPassword,
+		uValidator.hashRemember); err != nil {
 		return err
 	}
 
-	if user.Remember != "" {
-		user.RememberHash = uValidator.hmac.Hash(user.Remember)
-	}
 	return uValidator.UserDB.Update(user)
 }
 
@@ -133,11 +145,7 @@ func (uValidator *userValidator) hashPassword(user *User) error {
 
 func (uValidator *userValidator) hashRemember(user *User) error {
 	if user.Remember == "" {
-		token, err := rand.RememberToken()
-		if err != nil {
-			return err
-		}
-		user.Remember = token
+		return nil
 	}
 	user.RememberHash = uValidator.hmac.Hash(user.Remember)
 	return nil

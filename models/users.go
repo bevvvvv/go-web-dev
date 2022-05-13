@@ -107,6 +107,7 @@ func (uValidator *userValidator) Create(user *User) error {
 		uValidator.hashPassword,
 		uValidator.generateRemember,
 		uValidator.hashRemember,
+		uValidator.requireEmail,
 		uValidator.normalizeEmail); err != nil {
 		return err
 	}
@@ -118,6 +119,7 @@ func (uValidator *userValidator) Update(user *User) error {
 	if err := runUserValFuncs(user,
 		uValidator.hashPassword,
 		uValidator.hashRemember,
+		uValidator.requireEmail,
 		uValidator.normalizeEmail); err != nil {
 		return err
 	}
@@ -192,6 +194,13 @@ func (uValidator *userValidator) validateID(user *User) error {
 
 func (uValidator *userValidator) normalizeEmail(user *User) error {
 	user.Email = strings.TrimSpace(strings.ToLower(user.Email))
+	return nil
+}
+
+func (uValidator *userValidator) requireEmail(user *User) error {
+	if user.Email == "" {
+		return errors.New("email address is required")
+	}
 	return nil
 }
 

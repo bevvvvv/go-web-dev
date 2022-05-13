@@ -4,6 +4,7 @@ import (
 	"errors"
 	"go-web-dev/hash"
 	"go-web-dev/rand"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -79,6 +80,17 @@ type userValidator struct {
 	hmac hash.HMAC
 }
 
+func (uValidator *userValidator) ByEmail(email string) (*User, error) {
+	user := User{
+		Email: email,
+	}
+	if err := runUserValFuncs(&user,
+		uValidator.normalizeEmail); err != nil {
+		return nil, err
+	}
+	return uValidator.UserDB.ByEmail((user.Email))
+}
+
 func (uValidator *userValidator) ByRemember(remember string) (*User, error) {
 	user := User{
 		Remember: remember,
@@ -94,7 +106,8 @@ func (uValidator *userValidator) Create(user *User) error {
 	if err := runUserValFuncs(user,
 		uValidator.hashPassword,
 		uValidator.generateRemember,
-		uValidator.hashRemember); err != nil {
+		uValidator.hashRemember,
+		uValidator.normalizeEmail); err != nil {
 		return err
 	}
 
@@ -104,7 +117,8 @@ func (uValidator *userValidator) Create(user *User) error {
 func (uValidator *userValidator) Update(user *User) error {
 	if err := runUserValFuncs(user,
 		uValidator.hashPassword,
-		uValidator.hashRemember); err != nil {
+		uValidator.hashRemember,
+		uValidator.normalizeEmail); err != nil {
 		return err
 	}
 
@@ -173,6 +187,11 @@ func (uValidator *userValidator) validateID(user *User) error {
 	if user.ID <= 0 {
 		return ErrInvalidID
 	}
+	return nil
+}
+
+func (uValidator *userValidator) normalizeEmail(user *User) error {
+	user.Email = strings.TrimSpace(strings.ToLower(user.Email))
 	return nil
 }
 

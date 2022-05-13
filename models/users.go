@@ -19,24 +19,44 @@ var (
 const userPwPepper = "8#yQhWB$adFN"
 const hmacSecretKey = "secret-hmac-key"
 
-type UserService struct {
+// User accounts in database
+type User struct {
+	gorm.Model
+	Name         string
+	Email        string `gorm:"not null;unique_index"`
+	Password     string `gorm:"-"`
+	PasswordHash string `gorm:"not null"`
+	Remember     string `gorm:"-"`
+	RememberHash string `gorm:"not null;unique_index"`
+}
+
+// UserService is a set of methods used to manipulate and
+// work with the user model.
+type UserService interface {
+	// Authenticate will verify the provided email/pw are correct
+	// corresponding user to inputs is returned when correct
+	Authenticate(email, password string) (*User, error)
 	UserDB
 }
 
-func NewUserService(connectionInfo string) (*UserService, error) {
+func NewUserService(connectionInfo string) (UserService, error) {
 	uGorm, err := newUserGorm(connectionInfo)
 	if err != nil {
 		return nil, err
 	}
-	return &UserService{
+	return &userService{
 		UserDB: &userValidator{
 			UserDB: uGorm,
 		},
 	}, nil
 }
 
-func (userService *UserService) Authenticate(email, password string) (*User, error) {
-	user, err := userService.ByEmail(email)
+type userService struct {
+	UserDB
+}
+
+func (uService *userService) Authenticate(email, password string) (*User, error) {
+	user, err := uService.ByEmail(email)
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +70,8 @@ func (userService *UserService) Authenticate(email, password string) (*User, err
 		return nil, err
 	}
 }
+
+var _ UserDB = &userValidator{}
 
 type userValidator struct {
 	UserDB
@@ -190,14 +212,4 @@ func (uGorm *userGorm) DestructiveReset() error {
 		return err
 	}
 	return uGorm.AutoMigrate()
-}
-
-type User struct {
-	gorm.Model
-	Name         string
-	Email        string `gorm:"not null;unique_index"`
-	Password     string `gorm:"-"`
-	PasswordHash string `gorm:"not null"`
-	Remember     string `gorm:"-"`
-	RememberHash string `gorm:"not null;unique_index"`
 }

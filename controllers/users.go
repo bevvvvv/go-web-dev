@@ -10,7 +10,7 @@ import (
 
 // NewUsers is used to create a new Users controller.
 // Panics if templates not parsed correctly. Use at setup only.
-func NewUserController(userService *models.UserService) *UserController {
+func NewUserController(userService models.UserService) *UserController {
 	return &UserController{
 		NewUserView: views.NewView("bootstrap", "users/new"),
 		LoginView:   views.NewView("bootstrap", "users/login"),
@@ -21,7 +21,7 @@ func NewUserController(userService *models.UserService) *UserController {
 type UserController struct {
 	NewUserView *views.View
 	LoginView   *views.View
-	userService *models.UserService
+	userService models.UserService
 }
 
 type SignupForm struct {

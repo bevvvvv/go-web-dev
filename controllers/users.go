@@ -40,10 +40,7 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 	var form SignupForm
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
-		viewData.Alert = &views.Alert{
-			Level:   views.AlertLevelError,
-			Message: views.AlertMessageGeneric,
-		}
+		viewData.SetAlert(err)
 		userController.NewUserView.Render(w, viewData)
 		return
 	}
@@ -54,10 +51,7 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 		Password: form.Password,
 	}
 	if err := userController.userService.Create(&user); err != nil {
-		viewData.Alert = &views.Alert{
-			Level:   views.AlertLevelError,
-			Message: err.Error(),
-		}
+		viewData.SetAlert(err)
 		userController.NewUserView.Render(w, viewData)
 		return
 	}

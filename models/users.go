@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"go-web-dev/hash"
 	"go-web-dev/rand"
 	"regexp"
@@ -10,19 +9,6 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"golang.org/x/crypto/bcrypt"
-)
-
-var (
-	ErrNotFound             = errors.New("models: resource not found")
-	ErrInvalidID            = errors.New("models: ID provided is not valid")
-	ErrInvalidEmail         = errors.New("models: Email address is not valid")
-	ErrRequiredEmail        = errors.New("models: Email address is required")
-	ErrTakenEmail           = errors.New("models: Email address is already taken")
-	ErrInvalidPassword      = errors.New("models: Password is not valid")
-	ErrRequiredPassword     = errors.New("models: Password is required")
-	ErrIncorrectPassword    = errors.New("models: Incorrect password provided")
-	ErrInvalidRemeber       = errors.New("models: Remember token must be an adequate length")
-	ErrRequiredRememberHash = errors.New("models: Remember hash is required")
 )
 
 const userPwPepper = "8#yQhWB$adFN"

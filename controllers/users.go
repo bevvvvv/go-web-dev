@@ -5,6 +5,7 @@ import (
 	"go-web-dev/models"
 	"go-web-dev/rand"
 	"go-web-dev/views"
+	"log"
 	"net/http"
 )
 
@@ -30,26 +31,21 @@ type SignupForm struct {
 	Password string `schema:"password"`
 }
 
-func (userController *UserController) New(w http.ResponseWriter, r *http.Request) {
-	data := views.Data{
-		Alert: &views.Alert{
-			Level:   views.AlertLevelWarning,
-			Message: "Test dynamic alert message.",
-		},
-	}
-	if err := userController.NewUserView.Render(w, data); err != nil {
-		panic(err)
-	}
-}
-
 // Create is used to process the signup form.
 // Runs when a user submits the form.
 //
 // POST /signup
 func (userController *UserController) Create(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
 	var form SignupForm
 	if err := parseForm(r, &form); err != nil {
-		panic(err)
+		log.Println(err)
+		viewData.Alert = &views.Alert{
+			Level:   views.AlertLevelError,
+			Message: views.AlertMessageGeneric,
+		}
+		userController.NewUserView.Render(w, viewData)
+		return
 	}
 
 	user := models.User{
@@ -58,12 +54,16 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 		Password: form.Password,
 	}
 	if err := userController.userService.Create(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		viewData.Alert = &views.Alert{
+			Level:   views.AlertLevelError,
+			Message: err.Error(),
+		}
+		userController.NewUserView.Render(w, viewData)
 		return
 	}
 	err := userController.signIn(w, &user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 	http.Redirect(w, r, "/cookietest", http.StatusFound)

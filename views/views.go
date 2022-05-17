@@ -1,7 +1,9 @@
 package views
 
 import (
+	"bytes"
 	"html/template"
+	"io"
 	"net/http"
 	"path/filepath"
 )
@@ -32,12 +34,10 @@ type View struct {
 }
 
 func (thisView *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := thisView.Render(w, nil); err != nil {
-		panic(err)
-	}
+	thisView.Render(w, nil)
 }
 
-func (thisView *View) Render(w http.ResponseWriter, data interface{}) error {
+func (thisView *View) Render(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 	switch data.(type) {
 	case Data:
@@ -47,7 +47,12 @@ func (thisView *View) Render(w http.ResponseWriter, data interface{}) error {
 			Yield: data,
 		}
 	}
-	return thisView.Template.ExecuteTemplate(w, thisView.Layout, data)
+	var buffer bytes.Buffer
+	if err := thisView.Template.ExecuteTemplate(&buffer, thisView.Layout, data); err != nil {
+		http.Error(w, "Something went wrong. If the problem persists please contact us.", http.StatusInternalServerError)
+		return
+	}
+	io.Copy(w, &buffer)
 }
 
 // returns a slice of strings listing all layout files

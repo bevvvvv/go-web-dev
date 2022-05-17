@@ -30,6 +30,28 @@ type SignupForm struct {
 	Password string `schema:"password"`
 }
 
+func (userController *UserController) New(w http.ResponseWriter, r *http.Request) {
+	type Alert struct {
+		Level   string
+		Message string
+	}
+	type Data struct {
+		Alert Alert
+		Yield interface{}
+	}
+	alert := Alert{
+		Level:   "warning",
+		Message: "Successfully rendered a dynamic alert!",
+	}
+	data := Data{
+		Alert: alert,
+		Yield: "hello!",
+	}
+	if err := userController.NewUserView.Render(w, data); err != nil {
+		panic(err)
+	}
+}
+
 // Create is used to process the signup form.
 // Runs when a user submits the form.
 //

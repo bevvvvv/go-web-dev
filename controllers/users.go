@@ -72,27 +72,31 @@ type LoginForm struct {
 //
 // POST /login
 func (userController *UserController) Login(w http.ResponseWriter, r *http.Request) {
-	form := LoginForm{}
+	var viewData views.Data
+	var form LoginForm
 	if err := parseForm(r, &form); err != nil {
-		panic(err)
+		log.Println(err)
+		viewData.SetAlert(err)
+		userController.LoginView.Render(w, viewData)
+		return
 	}
 
 	user, err := userController.userService.Authenticate(form.Email, form.Password)
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
-			fmt.Fprintln(w, "Invalid email address")
-		case models.ErrIncorrectPassword:
-			fmt.Fprintln(w, "Incorrect password")
+			viewData.AlertError("Invalid email address")
 		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			viewData.SetAlert(err)
 		}
+		userController.LoginView.Render(w, viewData)
 		return
 	}
 
 	err = userController.signIn(w, user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		viewData.SetAlert(err)
+		userController.LoginView.Render(w, viewData)
 		return
 	}
 	http.Redirect(w, r, "/cookietest", http.StatusFound)

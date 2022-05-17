@@ -31,21 +31,11 @@ type SignupForm struct {
 }
 
 func (userController *UserController) New(w http.ResponseWriter, r *http.Request) {
-	type Alert struct {
-		Level   string
-		Message string
-	}
-	type Data struct {
-		Alert Alert
-		Yield interface{}
-	}
-	alert := Alert{
-		Level:   "warning",
-		Message: "Successfully rendered a dynamic alert!",
-	}
-	data := Data{
-		Alert: alert,
-		Yield: "hello!",
+	data := views.Data{
+		Alert: &views.Alert{
+			Level:   views.AlertLevelWarning,
+			Message: "Test dynamic alert message.",
+		},
 	}
 	if err := userController.NewUserView.Render(w, data); err != nil {
 		panic(err)

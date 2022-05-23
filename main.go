@@ -24,10 +24,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// TODO fix this
-	// defer userService.Close()
-	// userService.DestructiveReset()
-	services.User.AutoMigrate()
+	defer services.Close()
+	// services.DestructiveReset()
+	services.AutoMigrate()
 
 	// init controllers
 	staticController := controllers.NewStaticController()

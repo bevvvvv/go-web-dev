@@ -5,6 +5,7 @@ import "github.com/jinzhu/gorm"
 type Services struct {
 	Gallery GalleryService
 	User    UserService
+	db      *gorm.DB
 }
 
 func NewServices(connectionInfo string) (*Services, error) {
@@ -15,5 +16,29 @@ func NewServices(connectionInfo string) (*Services, error) {
 	db.LogMode(true)
 	return &Services{
 		User: NewUserService(db),
+		db:   db,
 	}, nil
+}
+
+// // Used to close a DB connection
+// Close() error
+
+// // Migration Helpers
+// AutoMigrate() error
+// DestructiveReset() error
+
+// Closes the uGorm database connection
+func (services *Services) Close() error {
+	return services.db.Close()
+}
+
+func (services *Services) AutoMigrate() error {
+	return services.db.AutoMigrate(&User{}, &Gallery{}).Error
+}
+
+func (services *Services) DestructiveReset() error {
+	if err := services.db.DropTableIfExists(&User{}, &Gallery{}).Error; err != nil {
+		return err
+	}
+	return services.AutoMigrate()
 }

@@ -34,14 +34,11 @@ type UserService interface {
 	UserDB
 }
 
-func NewUserService(connectionInfo string) (UserService, error) {
-	uGorm, err := newUserGorm(connectionInfo)
-	if err != nil {
-		return nil, err
-	}
+func NewUserService(db *gorm.DB) UserService {
+	uGorm := &userGorm{db}
 	return &userService{
 		UserDB: newUserValidator(uGorm, hash.NewHMAC(hmacSecretKey)),
-	}, nil
+	}
 }
 
 type userService struct {
@@ -313,17 +310,6 @@ var _ UserDB = &userGorm{}
 
 type userGorm struct {
 	db *gorm.DB
-}
-
-func newUserGorm(connectionInfo string) (*userGorm, error) {
-	db, err := gorm.Open("postgres", connectionInfo)
-	if err != nil {
-		return nil, err
-	}
-	db.LogMode(true)
-	return &userGorm{
-		db: db,
-	}, nil
 }
 
 func (uGorm *userGorm) ByID(id uint) (*User, error) {

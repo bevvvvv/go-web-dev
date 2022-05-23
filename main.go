@@ -20,17 +20,18 @@ const (
 func main() {
 	connectionInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
-	userService, err := models.NewUserService(connectionInfo)
+	services, err := models.NewServices(connectionInfo)
 	if err != nil {
 		panic(err)
 	}
-	defer userService.Close()
+	// TODO fix this
+	// defer userService.Close()
 	// userService.DestructiveReset()
-	userService.AutoMigrate()
+	services.User.AutoMigrate()
 
 	// init controllers
 	staticController := controllers.NewStaticController()
-	userController := controllers.NewUserController(userService)
+	userController := controllers.NewUserController(services.User)
 
 	// create mux router - routes requests to controllers
 	r := mux.NewRouter()

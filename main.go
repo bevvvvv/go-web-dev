@@ -45,6 +45,7 @@ func main() {
 	r.HandleFunc("/cookietest", userController.CookieTest).Methods("GET")
 	// galleries
 	r.Handle("/galleries/new", galleriesController.NewView).Methods("GET")
+	r.HandleFunc("/galleries", galleriesController.Create).Methods("POST")
 
 	// starts server -- my container exposes 9000 by default
 	http.ListenAndServe(":9000", r)

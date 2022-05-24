@@ -52,6 +52,7 @@ func main() {
 	r.HandleFunc("/cookietest", userController.CookieTest).Methods("GET")
 	// galleries
 	r.Handle("/galleries/new", userVerification.Apply(galleriesController.NewView)).Methods("GET")
+	r.HandleFunc("/galleries", userVerification.ApplyFn(galleriesController.Index)).Methods("GET")
 	r.HandleFunc("/galleries", userVerification.ApplyFn(galleriesController.Create)).Methods("POST")
 	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesController.Show).Methods("GET").Name(controllers.ShowGalleryRoute)
 	r.HandleFunc("/galleries/{id:[0-9]+}/edit", userVerification.ApplyFn(galleriesController.Edit)).Methods("GET")

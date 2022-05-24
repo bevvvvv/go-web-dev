@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"go-web-dev/context"
 	"go-web-dev/models"
 	"go-web-dev/views"
@@ -19,6 +18,7 @@ const (
 func NewGalleryController(galleryService models.GalleryService, r *mux.Router) *GalleryController {
 	return &GalleryController{
 		NewView:        views.NewView("bootstrap", "galleries/new"),
+		IndexView:      views.NewView("bootstrap", "galleries/index"),
 		ShowView:       views.NewView("bootstrap", "galleries/show"),
 		EditView:       views.NewView("bootstrap", "galleries/edit"),
 		galleryService: galleryService,
@@ -28,6 +28,7 @@ func NewGalleryController(galleryService models.GalleryService, r *mux.Router) *
 
 type GalleryController struct {
 	NewView        *views.View
+	IndexView      *views.View
 	ShowView       *views.View
 	EditView       *views.View
 	galleryService models.GalleryService
@@ -66,11 +67,24 @@ func (galleryController *GalleryController) Create(w http.ResponseWriter, r *htt
 
 	url, err := galleryController.router.Get(ShowGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))
 	if err != nil {
-		// TODO make this go to the index page (for galleries)
-		http.Redirect(w, r, "/", http.StatusInternalServerError)
+		http.Redirect(w, r, "/galleries", http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, url.Path, http.StatusFound)
+}
+
+// GET /galleries
+func (galleryController *GalleryController) Index(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+
+	user := context.User(r.Context())
+	galleries, err := galleryController.galleryService.ByUserID(user.ID)
+	if err != nil {
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+	}
+
+	viewData.Yield = galleries
+	galleryController.IndexView.Render(w, viewData)
 }
 
 // GET /galleries/:id
@@ -160,8 +174,7 @@ func (galleryController *GalleryController) Delete(w http.ResponseWriter, r *htt
 		viewData.Yield = gallery
 		galleryController.EditView.Render(w, viewData)
 	}
-	// TODO make this go to the index page (for galleries)
-	fmt.Fprintln(w, "Successfully deleted gallery")
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
 func (galleryController *GalleryController) fetchGallery(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {

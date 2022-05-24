@@ -2,6 +2,7 @@ package views
 
 import (
 	"bytes"
+	"go-web-dev/context"
 	"html/template"
 	"io"
 	"net/http"
@@ -34,21 +35,24 @@ type View struct {
 }
 
 func (thisView *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	thisView.Render(w, nil)
+	thisView.Render(w, r, nil)
 }
 
-func (thisView *View) Render(w http.ResponseWriter, data interface{}) {
+func (thisView *View) Render(w http.ResponseWriter, r *http.Request, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
-	switch data.(type) {
+	var viewData Data
+	switch d := data.(type) {
 	case Data:
-		//do nothing
+		viewData = d
 	default:
-		data = Data{
-			Yield: data,
+		viewData = Data{
+			Yield: d,
 		}
 	}
+	viewData.User = context.User(r.Context())
+
 	var buffer bytes.Buffer
-	if err := thisView.Template.ExecuteTemplate(&buffer, thisView.Layout, data); err != nil {
+	if err := thisView.Template.ExecuteTemplate(&buffer, thisView.Layout, viewData); err != nil {
 		http.Error(w, "Something went wrong. If the problem persists please contact us.", http.StatusInternalServerError)
 		return
 	}

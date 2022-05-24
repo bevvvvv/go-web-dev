@@ -37,8 +37,11 @@ func main() {
 	galleriesController := controllers.NewGalleryController(services.Gallery, r)
 
 	// login middleware
-	userVerification := middleware.UserVerification{
+	userExists := middleware.UserExists{
 		UserService: services.User,
+	}
+	userVerification := middleware.UserVerification{
+		UserExists: userExists,
 	}
 
 	// create mux router - routes requests to controllers
@@ -49,7 +52,6 @@ func main() {
 	r.HandleFunc("/signup", userController.Create).Methods("POST")
 	r.Handle("/login", userController.LoginView).Methods("GET")
 	r.HandleFunc("/login", userController.Login).Methods("POST")
-	r.HandleFunc("/cookietest", userController.CookieTest).Methods("GET")
 	// galleries
 	r.Handle("/galleries/new", userVerification.Apply(galleriesController.NewView)).Methods("GET")
 	r.HandleFunc("/galleries", userVerification.ApplyFn(galleriesController.Index)).Methods("GET")
@@ -60,5 +62,5 @@ func main() {
 	r.HandleFunc("/galleries/{id:[0-9]+}/delete", userVerification.ApplyFn(galleriesController.Delete)).Methods("POST")
 
 	// starts server -- my container exposes 9000 by default
-	http.ListenAndServe(":9000", r)
+	http.ListenAndServe(":9000", userExists.Apply(r))
 }

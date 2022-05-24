@@ -45,7 +45,7 @@ func (galleryController *GalleryController) Create(w http.ResponseWriter, r *htt
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
 		viewData.SetAlert(err)
-		galleryController.NewView.Render(w, viewData)
+		galleryController.NewView.Render(w, r, viewData)
 		return
 	}
 
@@ -61,7 +61,7 @@ func (galleryController *GalleryController) Create(w http.ResponseWriter, r *htt
 	}
 	if err := galleryController.galleryService.Create(&gallery); err != nil {
 		viewData.SetAlert(err)
-		galleryController.NewView.Render(w, viewData)
+		galleryController.NewView.Render(w, r, viewData)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (galleryController *GalleryController) Index(w http.ResponseWriter, r *http
 	}
 
 	viewData.Yield = galleries
-	galleryController.IndexView.Render(w, viewData)
+	galleryController.IndexView.Render(w, r, viewData)
 }
 
 // GET /galleries/:id
@@ -97,7 +97,7 @@ func (galleryController *GalleryController) Show(w http.ResponseWriter, r *http.
 	}
 
 	viewData.Yield = gallery
-	galleryController.ShowView.Render(w, viewData)
+	galleryController.ShowView.Render(w, r, viewData)
 }
 
 // GET /galleries/:id/edit
@@ -109,14 +109,14 @@ func (galleryController *GalleryController) Edit(w http.ResponseWriter, r *http.
 		return
 	}
 
-	user := context.User(r.Context())
-	if gallery.UserID != user.ID {
+	viewData.User = context.User(r.Context())
+	if gallery.UserID != viewData.User.ID {
 		http.Error(w, "Gallery not found", http.StatusNotFound)
 		return
 	}
 
 	viewData.Yield = gallery
-	galleryController.EditView.Render(w, viewData)
+	galleryController.EditView.Render(w, r, viewData)
 }
 
 // POST /galleries/:id/update
@@ -138,14 +138,14 @@ func (galleryController *GalleryController) Update(w http.ResponseWriter, r *htt
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
 		viewData.SetAlert(err)
-		galleryController.EditView.Render(w, viewData)
+		galleryController.EditView.Render(w, r, viewData)
 		return
 	}
 
 	gallery.Title = form.Title
 	if err := galleryController.galleryService.Update(gallery); err != nil {
 		viewData.SetAlert(err)
-		galleryController.EditView.Render(w, viewData)
+		galleryController.EditView.Render(w, r, viewData)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (galleryController *GalleryController) Update(w http.ResponseWriter, r *htt
 		Level:   views.AlertLevelSuccess,
 		Message: "Gallery succesfully updated!",
 	}
-	galleryController.EditView.Render(w, viewData)
+	galleryController.EditView.Render(w, r, viewData)
 }
 
 // POST /galleries/:id/delete
@@ -172,7 +172,7 @@ func (galleryController *GalleryController) Delete(w http.ResponseWriter, r *htt
 	if err := galleryController.galleryService.Delete(gallery.ID); err != nil {
 		viewData.SetAlert(err)
 		viewData.Yield = gallery
-		galleryController.EditView.Render(w, viewData)
+		galleryController.EditView.Render(w, r, viewData)
 	}
 	http.Redirect(w, r, "/galleries", http.StatusFound)
 }

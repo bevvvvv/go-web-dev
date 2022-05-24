@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"go-web-dev/models"
 	"go-web-dev/rand"
 	"go-web-dev/views"
@@ -41,7 +40,7 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
 		viewData.SetAlert(err)
-		userController.NewUserView.Render(w, viewData)
+		userController.NewUserView.Render(w, r, viewData)
 		return
 	}
 
@@ -52,7 +51,7 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 	}
 	if err := userController.userService.Create(&user); err != nil {
 		viewData.SetAlert(err)
-		userController.NewUserView.Render(w, viewData)
+		userController.NewUserView.Render(w, r, viewData)
 		return
 	}
 	err := userController.signIn(w, &user)
@@ -60,7 +59,7 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
-	http.Redirect(w, r, "/cookietest", http.StatusFound)
+	http.Redirect(w, r, "/galleries/new", http.StatusFound)
 }
 
 type LoginForm struct {
@@ -77,7 +76,7 @@ func (userController *UserController) Login(w http.ResponseWriter, r *http.Reque
 	if err := parseForm(r, &form); err != nil {
 		log.Println(err)
 		viewData.SetAlert(err)
-		userController.LoginView.Render(w, viewData)
+		userController.LoginView.Render(w, r, viewData)
 		return
 	}
 
@@ -89,17 +88,17 @@ func (userController *UserController) Login(w http.ResponseWriter, r *http.Reque
 		default:
 			viewData.SetAlert(err)
 		}
-		userController.LoginView.Render(w, viewData)
+		userController.LoginView.Render(w, r, viewData)
 		return
 	}
 
 	err = userController.signIn(w, user)
 	if err != nil {
 		viewData.SetAlert(err)
-		userController.LoginView.Render(w, viewData)
+		userController.LoginView.Render(w, r, viewData)
 		return
 	}
-	http.Redirect(w, r, "/cookietest", http.StatusFound)
+	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
 func (userController *UserController) signIn(w http.ResponseWriter, user *models.User) error {
@@ -121,17 +120,4 @@ func (userController *UserController) signIn(w http.ResponseWriter, user *models
 	}
 	http.SetCookie(w, &cookie)
 	return nil
-}
-
-func (userController *UserController) CookieTest(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("remember_token")
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-	user, err := userController.userService.ByRemember(cookie.Value)
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
-	}
-	fmt.Fprintln(w, "Email is: ", user.Email)
 }

@@ -19,8 +19,10 @@ const (
 )
 
 func main() {
+	r := mux.NewRouter()
 	connectionInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
+
 	services, err := models.NewServices(connectionInfo)
 	if err != nil {
 		panic(err)
@@ -32,7 +34,7 @@ func main() {
 	// init controllers
 	staticController := controllers.NewStaticController()
 	userController := controllers.NewUserController(services.User)
-	galleriesController := controllers.NewGalleryController(services.Gallery)
+	galleriesController := controllers.NewGalleryController(services.Gallery, r)
 
 	// login middleware
 	userVerification := middleware.UserVerification{
@@ -40,7 +42,6 @@ func main() {
 	}
 
 	// create mux router - routes requests to controllers
-	r := mux.NewRouter()
 	r.Handle("/", staticController.HomeView).Methods("GET")
 	r.Handle("/contact", staticController.ContactView).Methods("GET")
 	// users
@@ -52,6 +53,7 @@ func main() {
 	// galleries
 	r.Handle("/galleries/new", userVerification.Apply(galleriesController.NewView)).Methods("GET")
 	r.HandleFunc("/galleries", userVerification.ApplyFn(galleriesController.Create)).Methods("POST")
+	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesController.Show).Methods("GET").Name(controllers.ShowGalleryRoute)
 
 	// starts server -- my container exposes 9000 by default
 	http.ListenAndServe(":9000", r)

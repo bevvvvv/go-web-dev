@@ -288,21 +288,34 @@ func (uValidator *userValidator) duplicateEmail(user *User) error {
 // 2 - nil, ErrNotFound - no user found
 // 3 - nil, otherError - db is having issue
 type UserDB interface {
-	// Methods for querying single users
-	ByID(id uint) (*User, error)
-	ByEmail(email string) (*User, error)
-	ByRemember(RememberToken string) (*User, error)
-
 	//Methods for altering users
 	Create(user *User) error
 	Update(user *User) error
 	Delete(id uint) error
+
+	// Methods for querying single users
+	ByID(id uint) (*User, error)
+	ByEmail(email string) (*User, error)
+	ByRemember(RememberToken string) (*User, error)
 }
 
 var _ UserDB = &userGorm{}
 
 type userGorm struct {
 	db *gorm.DB
+}
+
+func (uGorm *userGorm) Create(user *User) error {
+	return uGorm.db.Create(user).Error
+}
+
+func (uGorm *userGorm) Update(user *User) error {
+	return uGorm.db.Save(user).Error
+}
+
+func (uGorm *userGorm) Delete(id uint) error {
+	user := User{Model: gorm.Model{ID: id}}
+	return uGorm.db.Delete(&user).Error
 }
 
 func (uGorm *userGorm) ByID(id uint) (*User, error) {
@@ -334,17 +347,4 @@ func first(db *gorm.DB, dst interface{}) error {
 	default:
 		return err
 	}
-}
-
-func (uGorm *userGorm) Create(user *User) error {
-	return uGorm.db.Create(user).Error
-}
-
-func (uGorm *userGorm) Update(user *User) error {
-	return uGorm.db.Save(user).Error
-}
-
-func (uGorm *userGorm) Delete(id uint) error {
-	user := User{Model: gorm.Model{ID: id}}
-	return uGorm.db.Delete(&user).Error
 }

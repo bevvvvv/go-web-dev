@@ -1,24 +1,34 @@
 package controllers
 
 import (
-	"fmt"
 	"go-web-dev/context"
 	"go-web-dev/models"
 	"go-web-dev/views"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
-func NewGalleryController(galleryService models.GalleryService) *GalleryController {
+const (
+	ShowGalleryRoute = "show_gallery"
+)
+
+func NewGalleryController(galleryService models.GalleryService, r *mux.Router) *GalleryController {
 	return &GalleryController{
 		NewView:        views.NewView("bootstrap", "galleries/new"),
+		ShowView:       views.NewView("bootstrap", "galleries/show"),
 		galleryService: galleryService,
+		router:         r,
 	}
 }
 
 type GalleryController struct {
 	NewView        *views.View
+	ShowView       *views.View
 	galleryService models.GalleryService
+	router         *mux.Router
 }
 
 type GalleryForm struct {
@@ -50,5 +60,36 @@ func (galleryController *GalleryController) Create(w http.ResponseWriter, r *htt
 		galleryController.NewView.Render(w, viewData)
 		return
 	}
-	fmt.Fprintln(w, gallery)
+	url, err := galleryController.router.Get(ShowGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))
+	if err != nil {
+		// TODO make this go to the index page (for galleries)
+		http.Redirect(w, r, "/", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, url.Path, http.StatusFound)
+}
+
+// GET /galleries/:id
+func (galleryController *GalleryController) Show(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid gallery ID", http.StatusNotFound)
+		return
+	}
+	gallery, err := galleryController.galleryService.ByID(uint(id))
+	if err != nil {
+		switch err {
+		case models.ErrNotFound:
+			http.Error(w, "Gallery not found", http.StatusNotFound)
+			return
+		default:
+			http.Error(w, "Whoops! Something went wrong.", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	viewData.Yield = gallery
+	galleryController.ShowView.Render(w, viewData)
 }

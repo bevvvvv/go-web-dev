@@ -68,6 +68,7 @@ func (gValidator *galleryValidator) requireTitle(gallery *Gallery) error {
 
 type GalleryDB interface {
 	Create(gallery *Gallery) error
+	ByID(id uint) (*Gallery, error)
 }
 
 var _ GalleryDB = &galleryGorm{}
@@ -78,4 +79,11 @@ type galleryGorm struct {
 
 func (gGorm *galleryGorm) Create(gallery *Gallery) error {
 	return gGorm.db.Create(gallery).Error
+}
+
+func (gGorm *galleryGorm) ByID(id uint) (*Gallery, error) {
+	var gallery Gallery
+	db := gGorm.db.Where("id = ?", id)
+	err := first(db, &gallery)
+	return &gallery, err
 }

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"go-web-dev/context"
 	"go-web-dev/models"
 	"go-web-dev/views"
 	"log"
@@ -34,8 +35,15 @@ func (galleryController *GalleryController) Create(w http.ResponseWriter, r *htt
 		return
 	}
 
+	// grab user from request context
+	user := context.User(r.Context())
+	if user == nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+	}
+
 	gallery := models.Gallery{
-		Title: form.Title,
+		Title:  form.Title,
+		UserID: user.ID,
 	}
 	if err := galleryController.galleryService.Create(&gallery); err != nil {
 		viewData.SetAlert(err)

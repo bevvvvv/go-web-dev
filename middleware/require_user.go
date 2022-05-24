@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"fmt"
+	"go-web-dev/context"
 	"go-web-dev/models"
 	"net/http"
 )
@@ -25,7 +25,10 @@ func (uVerification *UserVerification) ApplyFn(next http.HandlerFunc) http.Handl
 		if err != nil {
 			http.Redirect(w, r, "/login", http.StatusFound)
 		}
-		fmt.Println("Serving page to:", user)
+		// add user data to request context
+		ctx := r.Context()
+		ctx = context.WithUser(ctx, user)
+		r = r.WithContext(ctx)
 
 		next(w, r)
 	})

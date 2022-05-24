@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"go-web-dev/context"
 	"go-web-dev/models"
 	"go-web-dev/views"
@@ -139,6 +140,28 @@ func (galleryController *GalleryController) Update(w http.ResponseWriter, r *htt
 		Message: "Gallery succesfully updated!",
 	}
 	galleryController.EditView.Render(w, viewData)
+}
+
+// POST /galleries/:id/delete
+func (galleryController *GalleryController) Delete(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+	gallery, err := galleryController.fetchGallery(w, r)
+	if err != nil {
+		return
+	}
+
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(w, "Gallery not found", http.StatusNotFound)
+		return
+	}
+	if err := galleryController.galleryService.Delete(gallery.ID); err != nil {
+		viewData.SetAlert(err)
+		viewData.Yield = gallery
+		galleryController.EditView.Render(w, viewData)
+	}
+	// TODO make this go to the index page (for galleries)
+	fmt.Fprintln(w, "Successfully deleted gallery")
 }
 
 func (galleryController *GalleryController) fetchGallery(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {

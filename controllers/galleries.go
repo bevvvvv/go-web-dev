@@ -19,6 +19,7 @@ func NewGalleryController(galleryService models.GalleryService, r *mux.Router) *
 	return &GalleryController{
 		NewView:        views.NewView("bootstrap", "galleries/new"),
 		ShowView:       views.NewView("bootstrap", "galleries/show"),
+		EditView:       views.NewView("bootstrap", "galleries/edit"),
 		galleryService: galleryService,
 		router:         r,
 	}
@@ -27,6 +28,7 @@ func NewGalleryController(galleryService models.GalleryService, r *mux.Router) *
 type GalleryController struct {
 	NewView        *views.View
 	ShowView       *views.View
+	EditView       *views.View
 	galleryService models.GalleryService
 	router         *mux.Router
 }
@@ -72,24 +74,52 @@ func (galleryController *GalleryController) Create(w http.ResponseWriter, r *htt
 // GET /galleries/:id
 func (galleryController *GalleryController) Show(w http.ResponseWriter, r *http.Request) {
 	var viewData views.Data
+
+	gallery, err := galleryController.fetchGallery(w, r)
+	if err != nil {
+		return
+	}
+
+	viewData.Yield = gallery
+	galleryController.ShowView.Render(w, viewData)
+}
+
+// GET /galleries/:id/edit
+func (galleryController *GalleryController) Edit(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+
+	gallery, err := galleryController.fetchGallery(w, r)
+	if err != nil {
+		return
+	}
+
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(w, "Gallery not found", http.StatusNotFound)
+		return
+	}
+
+	viewData.Yield = gallery
+	galleryController.EditView.Render(w, viewData)
+}
+
+func (galleryController *GalleryController) fetchGallery(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {
 	idStr := mux.Vars(r)["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid gallery ID", http.StatusNotFound)
-		return
+		return nil, err
 	}
 	gallery, err := galleryController.galleryService.ByID(uint(id))
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
 			http.Error(w, "Gallery not found", http.StatusNotFound)
-			return
+			return nil, err
 		default:
 			http.Error(w, "Whoops! Something went wrong.", http.StatusInternalServerError)
-			return
+			return nil, err
 		}
 	}
-
-	viewData.Yield = gallery
-	galleryController.ShowView.Render(w, viewData)
+	return gallery, nil
 }

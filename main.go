@@ -54,6 +54,7 @@ func main() {
 	r.Handle("/galleries/new", userVerification.Apply(galleriesController.NewView)).Methods("GET")
 	r.HandleFunc("/galleries", userVerification.ApplyFn(galleriesController.Create)).Methods("POST")
 	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesController.Show).Methods("GET").Name(controllers.ShowGalleryRoute)
+	r.HandleFunc("/galleries/{id:[0-9]+}/edit", userVerification.ApplyFn(galleriesController.Edit)).Methods("GET")
 
 	// starts server -- my container exposes 9000 by default
 	http.ListenAndServe(":9000", r)

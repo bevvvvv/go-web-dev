@@ -134,13 +134,11 @@ func (galleryController *GalleryController) Update(w http.ResponseWriter, r *htt
 		return
 	}
 
-	url, err := galleryController.router.Get(ShowGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))
-	if err != nil {
-		// TODO make this go to the index page (for galleries)
-		http.Redirect(w, r, "/", http.StatusInternalServerError)
-		return
+	viewData.Alert = &views.Alert{
+		Level:   views.AlertLevelSuccess,
+		Message: "Gallery succesfully updated!",
 	}
-	http.Redirect(w, r, url.Path, http.StatusFound)
+	galleryController.EditView.Render(w, viewData)
 }
 
 func (galleryController *GalleryController) fetchGallery(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {

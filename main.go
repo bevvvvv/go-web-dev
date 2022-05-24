@@ -31,16 +31,20 @@ func main() {
 	// init controllers
 	staticController := controllers.NewStaticController()
 	userController := controllers.NewUserController(services.User)
+	galleriesController := controllers.NewGalleryController(services.Gallery)
 
 	// create mux router - routes requests to controllers
 	r := mux.NewRouter()
 	r.Handle("/", staticController.HomeView).Methods("GET")
 	r.Handle("/contact", staticController.ContactView).Methods("GET")
+	// users
 	r.Handle("/signup", userController.NewUserView).Methods("GET")
 	r.HandleFunc("/signup", userController.Create).Methods("POST")
 	r.Handle("/login", userController.LoginView).Methods("GET")
 	r.HandleFunc("/login", userController.Login).Methods("POST")
 	r.HandleFunc("/cookietest", userController.CookieTest).Methods("GET")
+	// galleries
+	r.Handle("/galleries/new", galleriesController.NewView).Methods("GET")
 
 	// starts server -- my container exposes 9000 by default
 	http.ListenAndServe(":9000", r)

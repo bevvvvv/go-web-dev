@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"go-web-dev/controllers"
+	"go-web-dev/middleware"
 	"go-web-dev/models"
 	"net/http"
 
@@ -33,6 +34,11 @@ func main() {
 	userController := controllers.NewUserController(services.User)
 	galleriesController := controllers.NewGalleryController(services.Gallery)
 
+	// login middleware
+	userVerification := middleware.UserVerification{
+		UserService: services.User,
+	}
+
 	// create mux router - routes requests to controllers
 	r := mux.NewRouter()
 	r.Handle("/", staticController.HomeView).Methods("GET")
@@ -44,8 +50,8 @@ func main() {
 	r.HandleFunc("/login", userController.Login).Methods("POST")
 	r.HandleFunc("/cookietest", userController.CookieTest).Methods("GET")
 	// galleries
-	r.Handle("/galleries/new", galleriesController.NewView).Methods("GET")
-	r.HandleFunc("/galleries", galleriesController.Create).Methods("POST")
+	r.Handle("/galleries/new", userVerification.Apply(galleriesController.NewView)).Methods("GET")
+	r.HandleFunc("/galleries", userVerification.ApplyFn(galleriesController.Create)).Methods("POST")
 
 	// starts server -- my container exposes 9000 by default
 	http.ListenAndServe(":9000", r)

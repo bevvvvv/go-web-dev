@@ -126,13 +126,12 @@ func (userController *UserController) signIn(w http.ResponseWriter, user *models
 func (userController *UserController) CookieTest(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("remember_token")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 	user, err := userController.userService.ByRemember(cookie.Value)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		http.Redirect(w, r, "/login", http.StatusFound)
 	}
 	fmt.Fprintln(w, "Email is: ", user.Email)
 }

@@ -62,6 +62,7 @@ func (galleryController *GalleryController) Create(w http.ResponseWriter, r *htt
 		galleryController.NewView.Render(w, viewData)
 		return
 	}
+
 	url, err := galleryController.router.Get(ShowGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))
 	if err != nil {
 		// TODO make this go to the index page (for galleries)
@@ -101,6 +102,45 @@ func (galleryController *GalleryController) Edit(w http.ResponseWriter, r *http.
 
 	viewData.Yield = gallery
 	galleryController.EditView.Render(w, viewData)
+}
+
+// POST /galleries/:id/update
+func (galleryController *GalleryController) Update(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+	var form GalleryForm
+
+	gallery, err := galleryController.fetchGallery(w, r)
+	if err != nil {
+		return
+	}
+
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(w, "Gallery not found", http.StatusNotFound)
+		return
+	}
+
+	if err := parseForm(r, &form); err != nil {
+		log.Println(err)
+		viewData.SetAlert(err)
+		galleryController.EditView.Render(w, viewData)
+		return
+	}
+
+	gallery.Title = form.Title
+	if err := galleryController.galleryService.Update(gallery); err != nil {
+		viewData.SetAlert(err)
+		galleryController.EditView.Render(w, viewData)
+		return
+	}
+
+	url, err := galleryController.router.Get(ShowGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))
+	if err != nil {
+		// TODO make this go to the index page (for galleries)
+		http.Redirect(w, r, "/", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, url.Path, http.StatusFound)
 }
 
 func (galleryController *GalleryController) fetchGallery(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {

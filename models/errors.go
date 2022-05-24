@@ -3,16 +3,18 @@ package models
 import "strings"
 
 var (
-	ErrNotFound             modelError = "models: resource not found"
-	ErrInvalidID            modelError = "models: ID provided is not valid"
-	ErrInvalidEmail         modelError = "models: Email address is not valid"
-	ErrRequiredEmail        modelError = "models: Email address is required"
-	ErrTakenEmail           modelError = "models: Email address is already taken"
-	ErrInvalidPassword      modelError = "models: Password is not valid"
-	ErrRequiredPassword     modelError = "models: Password is required"
-	ErrIncorrectPassword    modelError = "models: Incorrect password provided"
-	ErrInvalidRemeber       modelError = "models: Remember token must be an adequate length"
-	ErrRequiredRememberHash modelError = "models: Remember hash is required"
+	ErrNotFound             modelError   = "models: resource not found"
+	ErrInvalidID            privateError = "models: ID provided is not valid"
+	ErrRequiredUserID       privateError = "models: ID is required"
+	ErrInvalidEmail         modelError   = "models: Email address is not valid"
+	ErrRequiredEmail        modelError   = "models: Email address is required"
+	ErrTakenEmail           modelError   = "models: Email address is already taken"
+	ErrInvalidPassword      modelError   = "models: Password is not valid"
+	ErrRequiredPassword     modelError   = "models: Password is required"
+	ErrIncorrectPassword    modelError   = "models: Incorrect password provided"
+	ErrInvalidRemeber       privateError = "models: Remember token must be an adequate length"
+	ErrRequiredRememberHash privateError = "models: Remember hash is required"
+	ErrRequiredTitle        modelError   = "models: Title is required"
 )
 
 type modelError string
@@ -26,4 +28,10 @@ func (e modelError) Public() string {
 	split := strings.Split(str, " ")
 	split[0] = strings.Title(split[0])
 	return strings.Join(split, " ")
+}
+
+type privateError string
+
+func (e privateError) Error() string {
+	return string(e)
 }

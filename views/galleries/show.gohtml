@@ -4,14 +4,24 @@
     <h1>
         {{.Title}}
     </h1>
-    <ul>
-      {{range .Images}}
-        <li>
-          {{.}}
-        </li>
-      {{end}}
-    </ul>
-    <p>Images coming soon...</p>
   </div>
 </div>
+<div class="row">
+  {{range .SplitImages 3}}
+    <div class="col-md-4">
+      {{range .}}
+        <a href="{{.}}">
+          <img src="{{.}}" class="thumbnail">
+        </a>
+      {{end}}
+    </div>
+  {{end}}
+</div>
+
+<!-- Styles should be in style sheets in prod. -->
+<style>
+  .thumbnail {
+    width: 100%;
+  }
+</style>
 {{end}}

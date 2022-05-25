@@ -49,6 +49,9 @@ func (imgService *imageService) ByGalleryID(galleryID uint) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	for i := range filenames {
+		filenames[i] = "/" + filenames[i]
+	}
 	return filenames, nil
 }
 

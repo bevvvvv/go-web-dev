@@ -10,6 +10,18 @@ type Gallery struct {
 	Images []string `gorm:"-"`
 }
 
+func (gallery *Gallery) SplitImages(n int) [][]string {
+	result := make([][]string, n)
+	for i := 0; i < n; i++ {
+		result[i] = make([]string, 0)
+	}
+	for i, img := range gallery.Images {
+		column := i % n
+		result[column] = append(result[column], img)
+	}
+	return result
+}
+
 type GalleryService interface {
 	GalleryDB
 }

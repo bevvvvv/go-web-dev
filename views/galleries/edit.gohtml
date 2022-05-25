@@ -1,13 +1,13 @@
 {{define "yield"}}
 <div class="row">
   <div class="col-md-10 col-md-offset-1">
-    <h2>Edit your gallery: {{.Title}}</h2>
+    <h2>Edit your gallery: <a href="/galleries/{{.ID}}">{{.Title}}</a></h2>
     <hr>
   </div>
   <div class="col-md-12">
     {{template "editGalleryForm" .}}
   </div>
-  <div class="col-md-10 col-md-offset-1">
+  <div class="col-md-11">
     {{template "galleryImages" .}}
   </div>
   <div class="col-md-12">
@@ -55,11 +55,20 @@
 {{end}}
 
 {{define "galleryImages"}}
-<ul>
-  {{range .Images}}
-    <li>
-      {{.}}
-    </li>
-  {{end}}
-</ul>
+<label class="col-md-1 control-label">Images</label>
+{{range .SplitImages 5}}
+  <div class="col-md-2">
+    {{range .}}
+      <a href="{{.}}">
+        <img src="{{.}}" class="thumbnail">
+      </a>
+    {{end}}
+  </div>
+{{end}}
+<!-- Styles should be in style sheets in prod. -->
+<style>
+  .thumbnail {
+    width: 100%;
+  }
+</style>
 {{end}}

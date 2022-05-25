@@ -1,11 +1,14 @@
 package controllers
 
 import (
+	"fmt"
 	"go-web-dev/context"
 	"go-web-dev/models"
 	"go-web-dev/views"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -13,6 +16,9 @@ import (
 
 const (
 	ShowGalleryRoute = "show_gallery"
+
+	maxMultipartMemory = 100 << 20 // 100 megabytes
+	imageDir           = "images/galleries/"
 )
 
 func NewGalleryController(galleryService models.GalleryService, r *mux.Router) *GalleryController {
@@ -92,6 +98,7 @@ func (galleryController *GalleryController) Show(w http.ResponseWriter, r *http.
 	var viewData views.Data
 
 	gallery, err := galleryController.fetchGallery(w, r)
+	viewData.Yield = gallery
 	if err != nil {
 		return
 	}
@@ -105,6 +112,7 @@ func (galleryController *GalleryController) Edit(w http.ResponseWriter, r *http.
 	var viewData views.Data
 
 	gallery, err := galleryController.fetchGallery(w, r)
+	viewData.Yield = gallery
 	if err != nil {
 		return
 	}
@@ -125,6 +133,7 @@ func (galleryController *GalleryController) Update(w http.ResponseWriter, r *htt
 	var form GalleryForm
 
 	gallery, err := galleryController.fetchGallery(w, r)
+	viewData.Yield = gallery
 	if err != nil {
 		return
 	}
@@ -156,10 +165,76 @@ func (galleryController *GalleryController) Update(w http.ResponseWriter, r *htt
 	galleryController.EditView.Render(w, r, viewData)
 }
 
+// POST /galleries/:id/images
+func (galleryController *GalleryController) Upload(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+
+	// get gallery corresponding to path
+	gallery, err := galleryController.fetchGallery(w, r)
+	viewData.Yield = gallery
+	if err != nil {
+		return
+	}
+
+	// ensure user has access to gallery (owns it)
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(w, "Gallery not found", http.StatusNotFound)
+		return
+	}
+
+	// parse multipart form with images
+	err = r.ParseMultipartForm(maxMultipartMemory)
+	if err != nil {
+		log.Println(err)
+		viewData.SetAlert(err)
+		galleryController.EditView.Render(w, r, viewData)
+	}
+
+	// ensure local directory exists
+	galleryPath := fmt.Sprintf("%s/%v/", imageDir, gallery.ID)
+	err = os.MkdirAll(galleryPath, 0755)
+	if err != nil {
+		viewData.SetAlert(err)
+		galleryController.EditView.Render(w, r, viewData)
+		return
+	}
+
+	files := r.MultipartForm.File["images"]
+	for _, fileHeader := range files {
+		srcFile, err := fileHeader.Open()
+		if err != nil {
+			viewData.SetAlert(err)
+			galleryController.EditView.Render(w, r, viewData)
+			return
+		}
+		defer srcFile.Close()
+
+		dstFile, err := os.Create(galleryPath + fileHeader.Filename)
+		defer dstFile.Close()
+
+		_, err = io.Copy(dstFile, srcFile)
+		if err != nil {
+			viewData.SetAlert(err)
+			galleryController.EditView.Render(w, r, viewData)
+			return
+		}
+
+		log.Println(fmt.Sprintf("Succesfully uploaded %s", fileHeader.Filename))
+	}
+
+	viewData.Alert = &views.Alert{
+		Level:   views.AlertLevelSuccess,
+		Message: "Images succesfully uploaded!",
+	}
+	galleryController.EditView.Render(w, r, viewData)
+}
+
 // POST /galleries/:id/delete
 func (galleryController *GalleryController) Delete(w http.ResponseWriter, r *http.Request) {
 	var viewData views.Data
 	gallery, err := galleryController.fetchGallery(w, r)
+	viewData.Yield = gallery
 	if err != nil {
 		return
 	}

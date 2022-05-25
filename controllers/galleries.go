@@ -205,9 +205,6 @@ func (galleryController *GalleryController) Upload(w http.ResponseWriter, r *htt
 			galleryController.EditView.Render(w, r, viewData)
 			return
 		}
-
-		imgs, _ := galleryController.imgService.ByGalleryID(gallery.ID)
-		log.Println("Files: ", imgs)
 	}
 
 	viewData.Alert = &views.Alert{

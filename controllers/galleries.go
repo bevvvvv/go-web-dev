@@ -13,6 +13,7 @@ import (
 
 const (
 	ShowGalleryRoute = "show_gallery"
+	EditGalleryRoute = "edit_gallery"
 
 	maxMultipartMemory = 100 << 20 // 100 megabytes
 )
@@ -207,11 +208,12 @@ func (galleryController *GalleryController) Upload(w http.ResponseWriter, r *htt
 		}
 	}
 
-	viewData.Alert = &views.Alert{
-		Level:   views.AlertLevelSuccess,
-		Message: "Images succesfully uploaded!",
+	url, err := galleryController.router.Get(EditGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))
+	if err != nil {
+		http.Redirect(w, r, "/galleries", http.StatusInternalServerError)
+		return
 	}
-	galleryController.EditView.Render(w, r, viewData)
+	http.Redirect(w, r, url.Path, http.StatusFound)
 }
 
 // POST /galleries/:id/delete

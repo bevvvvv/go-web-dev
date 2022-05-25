@@ -165,7 +165,7 @@ func (galleryController *GalleryController) Update(w http.ResponseWriter, r *htt
 }
 
 // POST /galleries/:id/images
-func (galleryController *GalleryController) Upload(w http.ResponseWriter, r *http.Request) {
+func (galleryController *GalleryController) UploadImage(w http.ResponseWriter, r *http.Request) {
 	var viewData views.Data
 
 	// get gallery corresponding to path
@@ -206,6 +206,42 @@ func (galleryController *GalleryController) Upload(w http.ResponseWriter, r *htt
 			galleryController.EditView.Render(w, r, viewData)
 			return
 		}
+	}
+
+	url, err := galleryController.router.Get(EditGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))
+	if err != nil {
+		http.Redirect(w, r, "/galleries", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, url.Path, http.StatusFound)
+}
+
+// POST /galleries/:id/images/:filename/delete
+func (galleryController *GalleryController) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+	gallery, err := galleryController.fetchGallery(w, r)
+	viewData.Yield = gallery
+	if err != nil {
+		return
+	}
+
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(w, "Gallery not found", http.StatusNotFound)
+		return
+	}
+
+	filename := mux.Vars(r)["filename"]
+	img := models.Image{
+		Filename:  filename,
+		GalleryID: gallery.ID,
+	}
+	err = galleryController.imgService.Delete(&img)
+	if err != nil {
+		log.Println(err)
+		viewData.SetAlert(err)
+		galleryController.EditView.Render(w, r, viewData)
+		return
 	}
 
 	url, err := galleryController.router.Get(EditGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))

@@ -5,15 +5,15 @@ import "github.com/jinzhu/gorm"
 // Gallery is our image container that visitors view
 type Gallery struct {
 	gorm.Model
-	UserID uint     `gorm:"not null;index"`
-	Title  string   `gorm:"not null"`
-	Images []string `gorm:"-"`
+	UserID uint    `gorm:"not null;index"`
+	Title  string  `gorm:"not null"`
+	Images []Image `gorm:"-"`
 }
 
-func (gallery *Gallery) SplitImages(n int) [][]string {
-	result := make([][]string, n)
+func (gallery *Gallery) SplitImages(n int) [][]Image {
+	result := make([][]Image, n)
 	for i := 0; i < n; i++ {
-		result[i] = make([]string, 0)
+		result[i] = make([]Image, 0)
 	}
 	for i, img := range gallery.Images {
 		column := i % n

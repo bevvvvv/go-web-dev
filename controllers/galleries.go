@@ -5,10 +5,8 @@ import (
 	"go-web-dev/context"
 	"go-web-dev/models"
 	"go-web-dev/views"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -18,16 +16,16 @@ const (
 	ShowGalleryRoute = "show_gallery"
 
 	maxMultipartMemory = 100 << 20 // 100 megabytes
-	imageDir           = "images/galleries/"
 )
 
-func NewGalleryController(galleryService models.GalleryService, r *mux.Router) *GalleryController {
+func NewGalleryController(galleryService models.GalleryService, imageService models.ImageService, r *mux.Router) *GalleryController {
 	return &GalleryController{
 		NewView:        views.NewView("bootstrap", "galleries/new"),
 		IndexView:      views.NewView("bootstrap", "galleries/index"),
 		ShowView:       views.NewView("bootstrap", "galleries/show"),
 		EditView:       views.NewView("bootstrap", "galleries/edit"),
 		galleryService: galleryService,
+		imgService:     imageService,
 		router:         r,
 	}
 }
@@ -38,6 +36,7 @@ type GalleryController struct {
 	ShowView       *views.View
 	EditView       *views.View
 	galleryService models.GalleryService
+	imgService     models.ImageService
 	router         *mux.Router
 }
 
@@ -191,15 +190,6 @@ func (galleryController *GalleryController) Upload(w http.ResponseWriter, r *htt
 		galleryController.EditView.Render(w, r, viewData)
 	}
 
-	// ensure local directory exists
-	galleryPath := fmt.Sprintf("%s/%v/", imageDir, gallery.ID)
-	err = os.MkdirAll(galleryPath, 0755)
-	if err != nil {
-		viewData.SetAlert(err)
-		galleryController.EditView.Render(w, r, viewData)
-		return
-	}
-
 	files := r.MultipartForm.File["images"]
 	for _, fileHeader := range files {
 		srcFile, err := fileHeader.Open()
@@ -210,10 +200,7 @@ func (galleryController *GalleryController) Upload(w http.ResponseWriter, r *htt
 		}
 		defer srcFile.Close()
 
-		dstFile, err := os.Create(galleryPath + fileHeader.Filename)
-		defer dstFile.Close()
-
-		_, err = io.Copy(dstFile, srcFile)
+		err = galleryController.imgService.Create(gallery.ID, srcFile, fileHeader.Filename)
 		if err != nil {
 			viewData.SetAlert(err)
 			galleryController.EditView.Render(w, r, viewData)

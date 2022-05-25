@@ -34,7 +34,7 @@ func main() {
 	// init controllers
 	staticController := controllers.NewStaticController()
 	userController := controllers.NewUserController(services.User)
-	galleriesController := controllers.NewGalleryController(services.Gallery, r)
+	galleriesController := controllers.NewGalleryController(services.Gallery, services.Image, r)
 
 	// login middleware
 	userExists := middleware.UserExists{

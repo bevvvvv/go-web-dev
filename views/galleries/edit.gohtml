@@ -7,6 +7,9 @@
   <div class="col-md-12">
     {{template "editGalleryForm" .}}
   </div>
+  <div class="col-md-10 col-md-offset-1">
+    {{template "galleryImages" .}}
+  </div>
   <div class="col-md-12">
     {{template "uploadImageForm" .}}
   </div>
@@ -49,4 +52,14 @@
     </div>
   </div>
 </form>
+{{end}}
+
+{{define "galleryImages"}}
+<ul>
+  {{range .Images}}
+    <li>
+      {{.}}
+    </li>
+  {{end}}
+</ul>
 {{end}}

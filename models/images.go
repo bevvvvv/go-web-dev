@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 type ImageService interface {
 	Create(galleryID uint, r io.Reader, filename string) error
 
-	// ByGalleryID(galleryID uint) []string
+	ByGalleryID(galleryID uint) ([]string, error)
 }
 
 func NewImageService() ImageService {
@@ -40,6 +41,15 @@ func (imgService *imageService) Create(galleryID uint, srcFile io.Reader, filena
 	}
 
 	return nil
+}
+
+func (imgService *imageService) ByGalleryID(galleryID uint) ([]string, error) {
+	galleryPath, _ := imgService.imagePath(galleryID)
+	filenames, err := filepath.Glob(galleryPath + "*")
+	if err != nil {
+		return nil, err
+	}
+	return filenames, nil
 }
 
 func (imgService *imageService) imagePath(galleryID uint) (string, error) {

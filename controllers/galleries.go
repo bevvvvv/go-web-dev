@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"go-web-dev/context"
 	"go-web-dev/models"
 	"go-web-dev/views"
@@ -207,7 +206,8 @@ func (galleryController *GalleryController) Upload(w http.ResponseWriter, r *htt
 			return
 		}
 
-		log.Println(fmt.Sprintf("Succesfully uploaded %s", fileHeader.Filename))
+		imgs, _ := galleryController.imgService.ByGalleryID(gallery.ID)
+		log.Println("Files: ", imgs)
 	}
 
 	viewData.Alert = &views.Alert{
@@ -247,6 +247,7 @@ func (galleryController *GalleryController) fetchGallery(w http.ResponseWriter, 
 		return nil, err
 	}
 	gallery, err := galleryController.galleryService.ByID(uint(id))
+	gallery.Images, _ = galleryController.imgService.ByGalleryID(gallery.ID)
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:

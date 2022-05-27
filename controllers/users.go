@@ -4,7 +4,6 @@ import (
 	"go-web-dev/models"
 	"go-web-dev/rand"
 	"go-web-dev/views"
-	"log"
 	"net/http"
 )
 

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	host     = "host.docker.internal"
+	host     = "localhost"
 	port     = 5432
 	user     = "postgres"
 	password = "secretpass"
@@ -66,6 +66,5 @@ func main() {
 	imageHandler := http.FileServer(http.Dir("./images/"))
 	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", imageHandler))
 
-	// starts server -- my container exposes 9000 by default
-	http.ListenAndServe(":9000", userExists.Apply(r))
+	http.ListenAndServe(":3000", userExists.Apply(r))
 }

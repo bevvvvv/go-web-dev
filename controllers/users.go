@@ -38,7 +38,6 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 	var viewData views.Data
 	var form SignupForm
 	if err := parseForm(r, &form); err != nil {
-		log.Println(err)
 		viewData.SetAlert(err)
 		userController.NewUserView.Render(w, r, viewData)
 		return
@@ -74,7 +73,6 @@ func (userController *UserController) Login(w http.ResponseWriter, r *http.Reque
 	var viewData views.Data
 	var form LoginForm
 	if err := parseForm(r, &form); err != nil {
-		log.Println(err)
 		viewData.SetAlert(err)
 		userController.LoginView.Render(w, r, viewData)
 		return

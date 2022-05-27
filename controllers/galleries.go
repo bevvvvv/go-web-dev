@@ -48,7 +48,6 @@ func (galleryController *GalleryController) Create(w http.ResponseWriter, r *htt
 	var viewData views.Data
 	var form GalleryForm
 	if err := parseForm(r, &form); err != nil {
-		log.Println(err)
 		viewData.SetAlert(err)
 		galleryController.NewView.Render(w, r, viewData)
 		return
@@ -144,7 +143,6 @@ func (galleryController *GalleryController) Update(w http.ResponseWriter, r *htt
 	}
 
 	if err := parseForm(r, &form); err != nil {
-		log.Println(err)
 		viewData.SetAlert(err)
 		galleryController.EditView.Render(w, r, viewData)
 		return
@@ -185,7 +183,6 @@ func (galleryController *GalleryController) UploadImage(w http.ResponseWriter, r
 	// parse multipart form with images
 	err = r.ParseMultipartForm(maxMultipartMemory)
 	if err != nil {
-		log.Println(err)
 		viewData.SetAlert(err)
 		galleryController.EditView.Render(w, r, viewData)
 	}
@@ -238,7 +235,6 @@ func (galleryController *GalleryController) DeleteImage(w http.ResponseWriter, r
 	}
 	err = galleryController.imgService.Delete(&img)
 	if err != nil {
-		log.Println(err)
 		viewData.SetAlert(err)
 		galleryController.EditView.Render(w, r, viewData)
 		return

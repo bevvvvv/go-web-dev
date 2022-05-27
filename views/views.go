@@ -65,7 +65,7 @@ func (thisView *View) Render(w http.ResponseWriter, r *http.Request, data interf
 func layoutFiles() []string {
 	files, err := filepath.Glob(LayoutDir + "*" + TemplateExt)
 	if err != nil {
-		panic(nil)
+		panic(err)
 	}
 	return files
 }

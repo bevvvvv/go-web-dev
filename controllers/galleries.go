@@ -55,9 +55,6 @@ func (galleryController *GalleryController) Create(w http.ResponseWriter, r *htt
 
 	// grab user from request context
 	user := context.User(r.Context())
-	if user == nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
-	}
 
 	gallery := models.Gallery{
 		Title:  form.Title,
@@ -71,6 +68,7 @@ func (galleryController *GalleryController) Create(w http.ResponseWriter, r *htt
 
 	url, err := galleryController.router.Get(ShowGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))
 	if err != nil {
+		log.Println(err)
 		http.Redirect(w, r, "/galleries", http.StatusInternalServerError)
 		return
 	}
@@ -84,7 +82,9 @@ func (galleryController *GalleryController) Index(w http.ResponseWriter, r *http
 	user := context.User(r.Context())
 	galleries, err := galleryController.galleryService.ByUserID(user.ID)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
 	}
 
 	viewData.Yield = galleries
@@ -207,6 +207,7 @@ func (galleryController *GalleryController) UploadImage(w http.ResponseWriter, r
 
 	url, err := galleryController.router.Get(EditGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))
 	if err != nil {
+		log.Println(err)
 		http.Redirect(w, r, "/galleries", http.StatusInternalServerError)
 		return
 	}
@@ -242,6 +243,7 @@ func (galleryController *GalleryController) DeleteImage(w http.ResponseWriter, r
 
 	url, err := galleryController.router.Get(EditGalleryRoute).URL("id", strconv.Itoa(int(gallery.ID)))
 	if err != nil {
+		log.Println(err)
 		http.Redirect(w, r, "/galleries", http.StatusInternalServerError)
 		return
 	}
@@ -274,6 +276,7 @@ func (galleryController *GalleryController) fetchGallery(w http.ResponseWriter, 
 	idStr := mux.Vars(r)["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Invalid gallery ID", http.StatusNotFound)
 		return nil, err
 	}
@@ -285,6 +288,7 @@ func (galleryController *GalleryController) fetchGallery(w http.ResponseWriter, 
 			http.Error(w, "Gallery not found", http.StatusNotFound)
 			return nil, err
 		default:
+			log.Println(err)
 			http.Error(w, "Whoops! Something went wrong.", http.StatusInternalServerError)
 			return nil, err
 		}

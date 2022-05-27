@@ -144,6 +144,6 @@ func (gGorm *galleryGorm) ByID(id uint) (*Gallery, error) {
 
 func (gGorm *galleryGorm) ByUserID(userID uint) ([]Gallery, error) {
 	var galleries []Gallery
-	gGorm.db.Where("user_id = ?", userID).Find(&galleries)
-	return galleries, nil
+	err := gGorm.db.Where("user_id = ?", userID).Find(&galleries).Error
+	return galleries, err
 }

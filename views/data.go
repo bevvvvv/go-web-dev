@@ -29,6 +29,7 @@ func (data *Data) SetAlert(err error) {
 			Message: publicErr.Public(),
 		}
 	} else {
+		log.Println(err)
 		data.Alert = &Alert{
 			Level:   AlertLevelError,
 			Message: AlertMessageGeneric,

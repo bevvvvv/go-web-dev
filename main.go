@@ -65,6 +65,9 @@ func main() {
 	// serve local image files
 	imageHandler := http.FileServer(http.Dir("./images/"))
 	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", imageHandler))
+	// serve static assets
+	assetHandler := http.FileServer(http.Dir("./assets/"))
+	r.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", assetHandler))
 
 	http.ListenAndServe(":3000", userExists.Apply(r))
 }

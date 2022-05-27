@@ -5,9 +5,11 @@ import (
 	"go-web-dev/controllers"
 	"go-web-dev/middleware"
 	"go-web-dev/models"
+	"go-web-dev/rand"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/csrf"
 )
 
 const (
@@ -16,6 +18,7 @@ const (
 	user     = "postgres"
 	password = "secretpass"
 	dbname   = "fakeoku"
+	isProd 	 = false
 )
 
 func main() {
@@ -69,5 +72,10 @@ func main() {
 	assetHandler := http.FileServer(http.Dir("./assets/"))
 	r.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", assetHandler))
 
-	http.ListenAndServe(":3000", userExists.Apply(r))
+	bytes, err := rand.Bytes(32)
+	if err != nil {
+		panic(err)
+	}
+	csrfMiddleware := csrf.Protect(bytes, csrf.Secure(isProd))
+	http.ListenAndServe(":3000", csrfMiddleware(userExists.Apply(r)))
 }

@@ -8,17 +8,17 @@ import (
 	"go-web-dev/rand"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/csrf"
+	"github.com/gorilla/mux"
 )
 
 const (
-	host     = "localhost"
+	host     = "host.docker.internal"
 	port     = 5432
 	user     = "postgres"
 	password = "secretpass"
 	dbname   = "fakeoku"
-	isProd 	 = false
+	isProd   = false
 )
 
 func main() {

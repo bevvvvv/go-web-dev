@@ -4,6 +4,7 @@ import (
 	"go-web-dev/context"
 	"go-web-dev/models"
 	"net/http"
+	"strings"
 )
 
 type UserExists struct {
@@ -16,6 +17,13 @@ func (userExists *UserExists) Apply(next http.Handler) http.HandlerFunc {
 
 func (userExists *UserExists) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// static assets are not blocked behind login
+		path := r.URL.Path
+		if strings.HasPrefix(path, "/assets/") || strings.HasPrefix(path, "/images/") {
+			next(w, r)
+			return
+		}
+
 		cookie, err := r.Cookie("remember_token")
 		if err != nil {
 			next(w, r)

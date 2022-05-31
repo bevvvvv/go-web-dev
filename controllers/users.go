@@ -34,6 +34,15 @@ type SignupForm struct {
 	Password string `schema:"password"`
 }
 
+// GET /signup
+func (userController *UserController) New(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+	var form SignupForm
+	viewData.Yield = &form
+	parseURLParams(r, &form)
+	userController.NewUserView.Render(w, r, viewData)
+}
+
 // Create is used to process the signup form.
 // Runs when a user submits the form.
 //
@@ -41,6 +50,7 @@ type SignupForm struct {
 func (userController *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	var viewData views.Data
 	var form SignupForm
+	viewData.Yield = &form
 	if err := parseForm(r, &form); err != nil {
 		viewData.SetAlert(err)
 		userController.NewUserView.Render(w, r, viewData)

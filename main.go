@@ -55,7 +55,7 @@ func main() {
 	r.Handle("/", staticController.HomeView).Methods("GET")
 	r.Handle("/contact", staticController.ContactView).Methods("GET")
 	// users
-	r.Handle("/signup", userController.NewUserView).Methods("GET")
+	r.HandleFunc("/signup", userController.New).Methods("GET")
 	r.HandleFunc("/signup", userController.Create).Methods("POST")
 	r.Handle("/login", userController.LoginView).Methods("GET")
 	r.HandleFunc("/login", userController.Login).Methods("POST")

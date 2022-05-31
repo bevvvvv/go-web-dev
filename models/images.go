@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,7 +24,10 @@ func (img *Image) Path() string {
 }
 
 func (img *Image) Route() string {
-	return "/" + img.Path()
+	urlObject := url.URL{
+		Path: "/" + img.Path(),
+	}
+	return urlObject.String()
 }
 
 type ImageService interface {

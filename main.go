@@ -60,6 +60,10 @@ func main() {
 	r.Handle("/login", userController.LoginView).Methods("GET")
 	r.HandleFunc("/login", userController.Login).Methods("POST")
 	r.HandleFunc("/logout", userVerification.ApplyFn(userController.Logout)).Methods("POST")
+	r.Handle("/password/forgot", userController.ForgotPasswordView).Methods("GET")
+	r.HandleFunc("/password/forgot", userController.InitiateReset).Methods("POST")
+	r.HandleFunc("/password/reset", userController.ResetPassword).Methods("GET")
+	r.HandleFunc("/password/reset", userController.PerformReset).Methods("POST")
 	// galleries
 	r.Handle("/galleries/new", userVerification.Apply(galleriesController.NewView)).Methods("GET")
 	r.HandleFunc("/galleries", userVerification.ApplyFn(galleriesController.Index)).Methods("GET")

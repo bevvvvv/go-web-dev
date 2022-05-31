@@ -14,18 +14,22 @@ import (
 // Panics if templates not parsed correctly. Use at setup only.
 func NewUserController(userService models.UserService, emailClient *email.Client) *UserController {
 	return &UserController{
-		NewUserView: views.NewView("bootstrap", "users/new"),
-		LoginView:   views.NewView("bootstrap", "users/login"),
-		userService: userService,
-		emailClient: emailClient,
+		NewUserView:        views.NewView("bootstrap", "users/new"),
+		LoginView:          views.NewView("bootstrap", "users/login"),
+		ForgotPasswordView: views.NewView("bootstrap", "users/password/forgot"),
+		ResetPasswordView:  views.NewView("bootstrap", "users/password/reset"),
+		userService:        userService,
+		emailClient:        emailClient,
 	}
 }
 
 type UserController struct {
-	NewUserView *views.View
-	LoginView   *views.View
-	userService models.UserService
-	emailClient *email.Client
+	NewUserView        *views.View
+	LoginView          *views.View
+	ForgotPasswordView *views.View
+	ResetPasswordView  *views.View
+	userService        models.UserService
+	emailClient        *email.Client
 }
 
 type SignupForm struct {
@@ -39,7 +43,9 @@ func (userController *UserController) New(w http.ResponseWriter, r *http.Request
 	var viewData views.Data
 	var form SignupForm
 	viewData.Yield = &form
-	parseURLParams(r, &form)
+	if err := parseURLParams(r, &form); err != nil {
+		viewData.SetAlert(err)
+	}
 	userController.NewUserView.Render(w, r, viewData)
 }
 
@@ -140,6 +146,83 @@ func (userController *UserController) signIn(w http.ResponseWriter, user *models
 	}
 	http.SetCookie(w, &cookie)
 	return nil
+}
+
+type ForgotPasswordForm struct {
+	Email string `schema:"email"`
+}
+
+// POST /password/forgot
+func (userController *UserController) InitiateReset(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+	var form ForgotPasswordForm
+	viewData.Yield = &form
+	if err := parseForm(r, &form); err != nil {
+		viewData.SetAlert(err)
+		userController.ForgotPasswordView.Render(w, r, viewData)
+		return
+	}
+
+	user, err := userController.userService.ByEmail(form.Email)
+	if err != nil {
+		viewData.SetAlert(err)
+		userController.ForgotPasswordView.Render(w, r, viewData)
+		return
+	}
+	token, err := userController.userService.InitiateReset(user.ID)
+	if err != nil {
+		viewData.SetAlert(err)
+		userController.ForgotPasswordView.Render(w, r, viewData)
+		return
+	}
+
+	// TODO: Password reset email
+	_ = token
+
+	views.RedirectAlert(w, r, "/password/reset", http.StatusFound, views.Alert{
+		Level:   views.AlertLevelSuccess,
+		Message: "Instructions for resetting your password have been emailed to you.",
+	})
+}
+
+type ResetPasswordForm struct {
+	Token    string `schema:"token"`
+	Password string `schema:"password"`
+}
+
+// GET /password/reset
+func (userController *UserController) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+	var form ResetPasswordForm
+	viewData.Yield = &form
+	if err := parseURLParams(r, &form); err != nil {
+		viewData.SetAlert(err)
+	}
+	userController.ResetPasswordView.Render(w, r, viewData)
+}
+
+// POST /password/reset
+func (userController *UserController) PerformReset(w http.ResponseWriter, r *http.Request) {
+	var viewData views.Data
+	var form ResetPasswordForm
+	viewData.Yield = &form
+	if err := parseForm(r, &form); err != nil {
+		viewData.SetAlert(err)
+		userController.ForgotPasswordView.Render(w, r, viewData)
+		return
+	}
+
+	_, err := userController.userService.PerformReset(form.Token, form.Password)
+	if err != nil {
+		viewData.SetAlert(err)
+		userController.ForgotPasswordView.Render(w, r, viewData)
+		return
+	}
+
+	views.RedirectAlert(w, r, "/login", http.StatusFound, views.Alert{
+		Level:   views.AlertLevelSuccess,
+		Message: "Your password has been succesfully reset.",
+	})
 }
 
 // POST /logout

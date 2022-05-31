@@ -5,9 +5,14 @@ import (
 	"go-web-dev/rand"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
+)
+
+const (
+	resetTTL = 12 * time.Hour // 12 hours
 )
 
 // User accounts in database
@@ -27,20 +32,24 @@ type UserService interface {
 	// Authenticate will verify the provided email/pw are correct
 	// corresponding user to inputs is returned when correct
 	Authenticate(email, password string) (*User, error)
+	InitiateReset(userID uint) (string, error)
+	PerformReset(token, newPassword string) (*User, error)
 	UserDB
 }
 
 func NewUserService(db *gorm.DB, pepper string, hmacSecretKey string) UserService {
-	uGorm := &userGorm{db}
+	hmac := hash.NewHMAC(hmacSecretKey)
 	return &userService{
-		UserDB: newUserValidator(uGorm, pepper, hash.NewHMAC(hmacSecretKey)),
-		pepper: pepper,
+		UserDB:    newUserValidator(&userGorm{db}, pepper, hmac),
+		pwResetDB: newPWResetValidator(&pwResetGorm{db}, hmac),
+		pepper:    pepper,
 	}
 }
 
 type userService struct {
 	UserDB
-	pepper string
+	pwResetDB pwResetDB
+	pepper    string
 }
 
 func (uService *userService) Authenticate(email, password string) (*User, error) {
@@ -57,6 +66,45 @@ func (uService *userService) Authenticate(email, password string) (*User, error)
 	default:
 		return nil, err
 	}
+}
+
+func (uService *userService) InitiateReset(userID uint) (string, error) {
+	reset := pwReset{
+		UserID: userID,
+	}
+	if err := uService.pwResetDB.Create(&reset); err != nil {
+		return "", err
+	}
+	return reset.Token, nil
+}
+
+func (uService *userService) PerformReset(token, newPassword string) (*User, error) {
+	reset, err := uService.pwResetDB.ByToken(token)
+	if err != nil {
+		if err == ErrNotFound {
+			return nil, ErrInvalidResetToken
+		}
+		return nil, err
+	}
+
+	if time.Since(reset.CreatedAt) > resetTTL {
+		return nil, ErrExpiredResetToken
+	}
+
+	user, err := uService.ByID(reset.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	user.Password = newPassword
+	if err = uService.Update(user); err != nil {
+		return nil, err
+	}
+
+	if err = uService.pwResetDB.Delete(reset.UserID); err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 var _ UserDB = &userValidator{}

@@ -3,7 +3,7 @@ package models
 import "strings"
 
 var (
-	ErrNotFound             modelError   = "models: resource not found"
+	ErrNotFound             privateError = "models: resource not found"
 	ErrInvalidID            privateError = "models: ID provided is not valid"
 	ErrRequiredUserID       privateError = "models: ID is required"
 	ErrInvalidEmail         modelError   = "models: Email address is not valid"
@@ -15,6 +15,8 @@ var (
 	ErrInvalidRemeber       privateError = "models: Remember token must be an adequate length"
 	ErrRequiredRememberHash privateError = "models: Remember hash is required"
 	ErrRequiredTitle        modelError   = "models: Title is required"
+	ErrInvalidResetToken    modelError   = "models: Token provided is not valid"
+	ErrExpiredResetToken    modelError   = "models: Token provided has expired"
 )
 
 type modelError string

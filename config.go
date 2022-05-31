@@ -32,3 +32,19 @@ func DefaultPostgresConfig() PostgresConfig {
 		Name:     "fakeoku",
 	}
 }
+
+type AppConfig struct {
+	Port int
+	Env  string
+}
+
+func (appConfig *AppConfig) IsProd() bool {
+	return appConfig.Env == "prod"
+}
+
+func DefaultAppConfig() AppConfig {
+	return AppConfig{
+		Port: 3000,
+		Env:  "dev",
+	}
+}

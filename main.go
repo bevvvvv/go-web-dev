@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go-web-dev/controllers"
 	"go-web-dev/middleware"
 	"go-web-dev/models"
@@ -71,11 +72,13 @@ func main() {
 	assetHandler := http.FileServer(http.Dir("./assets/"))
 	r.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", assetHandler))
 
+	appConfig := DefaultAppConfig()
 	bytes, err := rand.Bytes(32)
 	if err != nil {
 		panic(err)
 	}
-	// TODO setup connection config
-	csrfMiddleware := csrf.Protect(bytes, csrf.Secure(isProd))
-	http.ListenAndServe(":3000", csrfMiddleware(userExists.Apply(r)))
+	csrfMiddleware := csrf.Protect(bytes, csrf.Secure(appConfig.IsProd()))
+
+	fmt.Printf("Starting the server at :%d...", appConfig.Port)
+	http.ListenAndServe(fmt.Sprintf(":%d", appConfig.Port), csrfMiddleware(userExists.Apply(r)))
 }

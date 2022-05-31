@@ -1,10 +1,12 @@
 package controllers
 
 import (
+	"go-web-dev/context"
 	"go-web-dev/models"
 	"go-web-dev/rand"
 	"go-web-dev/views"
 	"net/http"
+	"time"
 )
 
 // NewUsers is used to create a new Users controller.
@@ -117,4 +119,21 @@ func (userController *UserController) signIn(w http.ResponseWriter, user *models
 	}
 	http.SetCookie(w, &cookie)
 	return nil
+}
+
+// POST /logout
+func (userController *UserController) Logout(w http.ResponseWriter, r *http.Request) {
+	cookie := http.Cookie{
+		Name:     "remember_token",
+		Value:    "",
+		Expires:  time.Now(),
+		HttpOnly: true,
+	}
+	http.SetCookie(w, &cookie)
+
+	user := context.User(r.Context())
+	token, _ := rand.RememberToken()
+	user.Remember = token
+	userController.userService.Update(user)
+	http.Redirect(w, r, "/", http.StatusFound)
 }

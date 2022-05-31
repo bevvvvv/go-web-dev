@@ -56,6 +56,7 @@ func main() {
 	r.HandleFunc("/signup", userController.Create).Methods("POST")
 	r.Handle("/login", userController.LoginView).Methods("GET")
 	r.HandleFunc("/login", userController.Login).Methods("POST")
+	r.HandleFunc("/logout", userVerification.ApplyFn(userController.Logout)).Methods("POST")
 	// galleries
 	r.Handle("/galleries/new", userVerification.Apply(galleriesController.NewView)).Methods("GET")
 	r.HandleFunc("/galleries", userVerification.ApplyFn(galleriesController.Index)).Methods("GET")

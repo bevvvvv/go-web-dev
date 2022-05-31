@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 )
 
-func LoadConfig(required bool) AppConfig {
+func LoadConfig(required bool, dbEnv bool) AppConfig {
+	var appConfig AppConfig
+
 	jsonFile, err := os.Open("config/config.json")
 	if err != nil {
 		if required {
@@ -14,15 +17,26 @@ func LoadConfig(required bool) AppConfig {
 			panic(err)
 		}
 		fmt.Println("Using the default config...")
-		return DefaultAppConfig()
+		appConfig = DefaultAppConfig()
+	} else {
+		decoder := json.NewDecoder(jsonFile)
+		err = decoder.Decode(&appConfig)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Successfully loaded configuration json...")
 	}
-	var appConfig AppConfig
-	decoder := json.NewDecoder(jsonFile)
-	err = decoder.Decode(&appConfig)
-	if err != nil {
-		panic(err)
+
+	if dbEnv {
+		appConfig.Database.Host = os.Getenv("DATABASE_HOST")
+		appConfig.Database.Port, err = strconv.Atoi(os.Getenv("DATABASE_PORT"))
+		if err != nil {
+			panic(err)
+		}
+		appConfig.Database.User = os.Getenv("DATABASE_USER")
+		appConfig.Database.Password = os.Getenv("DATABASE_PASSWORD")
+		appConfig.Database.Name = os.Getenv("DATABASE_NAME")
 	}
-	fmt.Println("Successfully loaded configuration json...")
 	return appConfig
 }
 

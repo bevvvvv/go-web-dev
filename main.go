@@ -15,9 +15,10 @@ import (
 
 func main() {
 	prodFlag := flag.Bool("prod", false, "Set to true in production. This ensures that a config file is provided.")
+	envFlag := flag.Bool("dbenv", false, "If true, reads database connection values from environment variables.")
 	flag.Parse()
 
-	appConfig := LoadConfig(*prodFlag)
+	appConfig := LoadConfig(*prodFlag, *envFlag)
 
 	services, err := models.NewServices(
 		models.WithGormDB(appConfig.Database.Dialect(), appConfig.Database.ConnectionString()),

@@ -57,7 +57,7 @@ func (thisView *View) Render(w http.ResponseWriter, r *http.Request, data interf
 			Yield: d,
 		}
 	}
-	if alert := getAlert(r); alert != nil && viewData.Alert == nil {
+	if alert := getAlert(r); alert != nil {
 		viewData.Alert = alert
 		clearAlert(w)
 	}

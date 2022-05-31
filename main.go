@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"go-web-dev/controllers"
+	"go-web-dev/email"
 	"go-web-dev/middleware"
 	"go-web-dev/models"
 	"go-web-dev/rand"
@@ -34,10 +35,12 @@ func main() {
 	// services.DestructiveReset()
 	services.AutoMigrate()
 
+	emailClient := email.NewClient(email.WithMailgun(appConfig.Mailgun.APIKey, appConfig.Mailgun.PublicAPIKey, appConfig.Mailgun.Domain))
+
 	// init controllers
 	r := mux.NewRouter()
 	staticController := controllers.NewStaticController()
-	userController := controllers.NewUserController(services.User)
+	userController := controllers.NewUserController(services.User, emailClient)
 	galleriesController := controllers.NewGalleryController(services.Gallery, services.Image, r)
 
 	// login middleware

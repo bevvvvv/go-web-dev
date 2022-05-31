@@ -9,5 +9,9 @@
         "user": "postgres",
         "password": "secretpass",
         "name": "fakeoku"
+    },
+    "mailgun": {
+        "public_api_key": "pubkey-dab3e3fd5bac59a77c4fc649db3b2fc9",
+        "domain": "sandboxfeb2a61a15e540e89876ab0c4c26a096.mailgun.org"
     }
 }

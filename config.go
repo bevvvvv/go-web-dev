@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -27,6 +28,11 @@ func LoadConfig(required bool, dbEnv bool) AppConfig {
 		fmt.Println("Successfully loaded configuration json...")
 	}
 
+	// anyone with access can use account
+	appConfig.Mailgun.APIKey = os.Getenv("API_KEY")
+	if appConfig.Mailgun.APIKey == "" {
+		panic(errors.New("No API key provided for mailgun client!"))
+	}
 	if dbEnv {
 		appConfig.Database.Host = os.Getenv("DATABASE_HOST")
 		appConfig.Database.Port, err = strconv.Atoi(os.Getenv("DATABASE_PORT"))
@@ -38,6 +44,35 @@ func LoadConfig(required bool, dbEnv bool) AppConfig {
 		appConfig.Database.Name = os.Getenv("DATABASE_NAME")
 	}
 	return appConfig
+}
+
+type AppConfig struct {
+	Port     int            `json:"port"`
+	Env      string         `json:"env"`
+	Pepper   string         `json:"pepper"`
+	HMACKey  string         `json:"hmac_key"`
+	Mailgun  MailgunConfig  `json:"mailgun"`
+	Database PostgresConfig `json:"database"`
+}
+
+func (appConfig *AppConfig) IsProd() bool {
+	return appConfig.Env == "prod"
+}
+
+func DefaultAppConfig() AppConfig {
+	return AppConfig{
+		Port:     3000,
+		Env:      "dev",
+		Pepper:   "dev-pepper",
+		HMACKey:  "dev-hmac-key",
+		Database: DefaultPostgresConfig(),
+	}
+}
+
+type MailgunConfig struct {
+	APIKey       string `json:"api_key"`
+	PublicAPIKey string `json:"public_api_key"`
+	Domain       string `json:"domain"`
 }
 
 type PostgresConfig struct {
@@ -68,27 +103,5 @@ func DefaultPostgresConfig() PostgresConfig {
 		User:     "postgres",
 		Password: "secretpass",
 		Name:     "fakeoku",
-	}
-}
-
-type AppConfig struct {
-	Port     int            `json:"port"`
-	Env      string         `json:"env"`
-	Pepper   string         `json:"pepper"`
-	HMACKey  string         `json:"hmac_key"`
-	Database PostgresConfig `json:"database"`
-}
-
-func (appConfig *AppConfig) IsProd() bool {
-	return appConfig.Env == "prod"
-}
-
-func DefaultAppConfig() AppConfig {
-	return AppConfig{
-		Port:     3000,
-		Env:      "dev",
-		Pepper:   "dev-pepper",
-		HMACKey:  "dev-hmac-key",
-		Database: DefaultPostgresConfig(),
 	}
 }

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"go-web-dev/context"
+	"go-web-dev/email"
 	"go-web-dev/models"
 	"go-web-dev/rand"
 	"go-web-dev/views"
@@ -11,11 +12,12 @@ import (
 
 // NewUsers is used to create a new Users controller.
 // Panics if templates not parsed correctly. Use at setup only.
-func NewUserController(userService models.UserService) *UserController {
+func NewUserController(userService models.UserService, emailClient *email.Client) *UserController {
 	return &UserController{
 		NewUserView: views.NewView("bootstrap", "users/new"),
 		LoginView:   views.NewView("bootstrap", "users/login"),
 		userService: userService,
+		emailClient: emailClient,
 	}
 }
 
@@ -23,6 +25,7 @@ type UserController struct {
 	NewUserView *views.View
 	LoginView   *views.View
 	userService models.UserService
+	emailClient *email.Client
 }
 
 type SignupForm struct {
@@ -54,6 +57,9 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 		userController.NewUserView.Render(w, r, viewData)
 		return
 	}
+
+	go userController.emailClient.SendWelcomeMessage(user.Name, user.Email)
+
 	err := userController.signIn(w, &user)
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusFound)

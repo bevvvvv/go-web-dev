@@ -57,6 +57,10 @@ func (thisView *View) Render(w http.ResponseWriter, r *http.Request, data interf
 			Yield: d,
 		}
 	}
+	if alert := getAlert(r); alert != nil && viewData.Alert == nil {
+		viewData.Alert = alert
+		clearAlert(w)
+	}
 	viewData.User = context.User(r.Context())
 
 	var buffer bytes.Buffer

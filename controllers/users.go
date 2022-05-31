@@ -59,7 +59,12 @@ func (userController *UserController) Create(w http.ResponseWriter, r *http.Requ
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
-	http.Redirect(w, r, "/galleries/new", http.StatusFound)
+
+	alert := views.Alert{
+		Level:   views.AlertLevelSuccess,
+		Message: "Account has been succesfully created!",
+	}
+	views.RedirectAlert(w, r, "/galleries/new", http.StatusFound, alert)
 }
 
 type LoginForm struct {

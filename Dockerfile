@@ -4,10 +4,12 @@ FROM golang:1.18-alpine
 # WORKDIR is $GOPATH
 COPY ./ ./go-web-dev
 WORKDIR $GOPATH/go-web-dev
+# config.json is loaded in this directory
+VOLUME $GOPATH/go-web-dev/config
 
 # install dependencies
 RUN go build
 
 # app port
 EXPOSE 3000
-CMD go run main.go
+CMD go run *.go

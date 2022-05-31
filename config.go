@@ -7,7 +7,7 @@ import (
 )
 
 func LoadConfig(required bool) AppConfig {
-	jsonFile, err := os.Open("config.json")
+	jsonFile, err := os.Open("config/config.json")
 	if err != nil {
 		if required {
 			fmt.Println("Unable to load configuration file.")

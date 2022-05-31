@@ -10,10 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// TODO add to config
-const userPwPepper = "8#yQhWB$adFN"
-const hmacSecretKey = "secret-hmac-key"
-
 // User accounts in database
 type User struct {
 	gorm.Model
@@ -34,15 +30,17 @@ type UserService interface {
 	UserDB
 }
 
-func NewUserService(db *gorm.DB) UserService {
+func NewUserService(db *gorm.DB, pepper string, hmacSecretKey string) UserService {
 	uGorm := &userGorm{db}
 	return &userService{
-		UserDB: newUserValidator(uGorm, hash.NewHMAC(hmacSecretKey)),
+		UserDB: newUserValidator(uGorm, pepper, hash.NewHMAC(hmacSecretKey)),
+		pepper: pepper,
 	}
 }
 
 type userService struct {
 	UserDB
+	pepper string
 }
 
 func (uService *userService) Authenticate(email, password string) (*User, error) {
@@ -50,7 +48,7 @@ func (uService *userService) Authenticate(email, password string) (*User, error)
 	if err != nil {
 		return nil, err
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password+userPwPepper))
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password+uService.pepper))
 	switch err {
 	case bcrypt.ErrMismatchedHashAndPassword:
 		return nil, ErrIncorrectPassword
@@ -67,13 +65,15 @@ type userValidator struct {
 	UserDB
 	hmac       hash.HMAC
 	emailRegex *regexp.Regexp
+	pepper     string
 }
 
-func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
+func newUserValidator(udb UserDB, pepper string, hmac hash.HMAC) *userValidator {
 	return &userValidator{
 		UserDB:     udb,
 		hmac:       hmac,
 		emailRegex: regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
+		pepper:     pepper,
 	}
 }
 
@@ -165,7 +165,7 @@ func (uValidator *userValidator) hashPassword(user *User) error {
 	if user.Password == "" {
 		return nil
 	}
-	pwBytes := []byte(user.Password + userPwPepper)
+	pwBytes := []byte(user.Password + uValidator.pepper)
 	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
 	if err != nil {
 		return err

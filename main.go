@@ -12,21 +12,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// TODO add to config
-const (
-	host     = "host.docker.internal"
-	port     = 5432
-	user     = "postgres"
-	password = "secretpass"
-	dbname   = "fakeoku"
-	isProd   = false
-)
-
 func main() {
-	r := mux.NewRouter()
-
+	appConfig := DefaultAppConfig()
 	dbConfig := DefaultPostgresConfig()
-	services, err := models.NewServices(dbConfig.Dialect(), dbConfig.ConnectionString())
+
+	services, err := models.NewServices(
+		models.WithGormDB(dbConfig.Dialect(), dbConfig.ConnectionString()),
+		models.WithDBLogMode(!appConfig.IsProd()),
+		models.WithGalleryService(),
+		models.WithUserService(appConfig.Pepper, appConfig.HMACKey),
+		models.WithImageService(),
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -35,6 +31,7 @@ func main() {
 	services.AutoMigrate()
 
 	// init controllers
+	r := mux.NewRouter()
 	staticController := controllers.NewStaticController()
 	userController := controllers.NewUserController(services.User)
 	galleriesController := controllers.NewGalleryController(services.Gallery, services.Image, r)
@@ -72,7 +69,6 @@ func main() {
 	assetHandler := http.FileServer(http.Dir("./assets/"))
 	r.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", assetHandler))
 
-	appConfig := DefaultAppConfig()
 	bytes, err := rand.Bytes(32)
 	if err != nil {
 		panic(err)

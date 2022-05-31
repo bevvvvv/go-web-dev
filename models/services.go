@@ -12,27 +12,56 @@ type Services struct {
 	db      *gorm.DB
 }
 
-func NewServices(dialect string, connectionInfo string) (*Services, error) {
-	// TODO setup config
-	db, err := gorm.Open(dialect, connectionInfo)
-	if err != nil {
-		return nil, err
+type ServicesConfig func(*Services) error
+
+func WithGormDB(dialect string, connectionInfo string) ServicesConfig {
+	return func(services *Services) error {
+		db, err := gorm.Open(dialect, connectionInfo)
+		if err != nil {
+			return err
+		}
+		services.db = db
+		return nil
 	}
-	db.LogMode(true)
-	return &Services{
-		User:    NewUserService(db),
-		Gallery: NewGalleryService(db),
-		Image:   NewImageService(),
-		db:      db,
-	}, nil
 }
 
-// // Used to close a DB connection
-// Close() error
+func WithDBLogMode(mode bool) ServicesConfig {
+	return func(services *Services) error {
+		services.db.LogMode(mode)
+		return nil
+	}
+}
 
-// // Migration Helpers
-// AutoMigrate() error
-// DestructiveReset() error
+func WithGalleryService() ServicesConfig {
+	return func(services *Services) error {
+		services.Gallery = NewGalleryService(services.db)
+		return nil
+	}
+}
+
+func WithUserService(pepper string, hmacSecretKey string) ServicesConfig {
+	return func(services *Services) error {
+		services.User = NewUserService(services.db, pepper, hmacSecretKey)
+		return nil
+	}
+}
+
+func WithImageService() ServicesConfig {
+	return func(services *Services) error {
+		services.Image = NewImageService()
+		return nil
+	}
+}
+
+func NewServices(configs ...ServicesConfig) (*Services, error) {
+	var services Services
+	for _, config := range configs {
+		if err := config(&services); err != nil {
+			return nil, err
+		}
+	}
+	return &services, nil
+}
 
 // Closes the uGorm database connection
 func (services *Services) Close() error {

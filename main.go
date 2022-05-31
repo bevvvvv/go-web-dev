@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go-web-dev/controllers"
 	"go-web-dev/middleware"
 	"go-web-dev/models"
@@ -12,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// TODO add to config
 const (
 	host     = "host.docker.internal"
 	port     = 5432
@@ -23,10 +23,9 @@ const (
 
 func main() {
 	r := mux.NewRouter()
-	connectionInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
 
-	services, err := models.NewServices(connectionInfo)
+	dbConfig := DefaultPostgresConfig()
+	services, err := models.NewServices(dbConfig.Dialect(), dbConfig.ConnectionString())
 	if err != nil {
 		panic(err)
 	}
@@ -76,6 +75,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	// TODO setup connection config
 	csrfMiddleware := csrf.Protect(bytes, csrf.Secure(isProd))
 	http.ListenAndServe(":3000", csrfMiddleware(userExists.Apply(r)))
 }

@@ -1,6 +1,9 @@
 package models
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
+)
 
 type Services struct {
 	Gallery GalleryService
@@ -9,8 +12,9 @@ type Services struct {
 	db      *gorm.DB
 }
 
-func NewServices(connectionInfo string) (*Services, error) {
-	db, err := gorm.Open("postgres", connectionInfo)
+func NewServices(dialect string, connectionInfo string) (*Services, error) {
+	// TODO setup config
+	db, err := gorm.Open(dialect, connectionInfo)
 	if err != nil {
 		return nil, err
 	}

@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"golang.org/x/crypto/bcrypt"
 )
 
+// TODO add to config
 const userPwPepper = "8#yQhWB$adFN"
 const hmacSecretKey = "secret-hmac-key"
 

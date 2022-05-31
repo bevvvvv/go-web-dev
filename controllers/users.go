@@ -165,6 +165,9 @@ func (userController *UserController) InitiateReset(w http.ResponseWriter, r *ht
 
 	user, err := userController.userService.ByEmail(form.Email)
 	if err != nil {
+		if err == models.ErrNotFound {
+			err = models.ErrInvalidEmail
+		}
 		viewData.SetAlert(err)
 		userController.ForgotPasswordView.Render(w, r, viewData)
 		return

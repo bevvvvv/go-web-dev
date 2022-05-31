@@ -1,0 +1,13 @@
+{
+    "port": 3000,
+    "env": "dev",
+    "pepper": "dev-pepper",
+    "hmac_key": "dev-hmac-key",
+    "database": {
+        "host": "host.docker.internal",
+        "port": 5432,
+        "user": "postgres",
+        "password": "secretpass",
+        "name": "fakeoku"
+    }
+}

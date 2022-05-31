@@ -1,6 +1,30 @@
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+)
+
+func LoadConfig(required bool) AppConfig {
+	jsonFile, err := os.Open("config.json")
+	if err != nil {
+		if required {
+			fmt.Println("Unable to load configuration file.")
+			panic(err)
+		}
+		fmt.Println("Using the default config...")
+		return DefaultAppConfig()
+	}
+	var appConfig AppConfig
+	decoder := json.NewDecoder(jsonFile)
+	err = decoder.Decode(&appConfig)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Successfully loaded configuration json...")
+	return appConfig
+}
 
 type PostgresConfig struct {
 	Host     string `json:"host"`
@@ -34,10 +58,11 @@ func DefaultPostgresConfig() PostgresConfig {
 }
 
 type AppConfig struct {
-	Port    int    `json:"port"`
-	Env     string `json:"env"`
-	Pepper  string `json:"pepper"`
-	HMACKey string `json:"hmac_key"`
+	Port     int            `json:"port"`
+	Env      string         `json:"env"`
+	Pepper   string         `json:"pepper"`
+	HMACKey  string         `json:"hmac_key"`
+	Database PostgresConfig `json:"database"`
 }
 
 func (appConfig *AppConfig) IsProd() bool {
@@ -46,9 +71,10 @@ func (appConfig *AppConfig) IsProd() bool {
 
 func DefaultAppConfig() AppConfig {
 	return AppConfig{
-		Port:    3000,
-		Env:     "dev",
-		Pepper:  "dev-pepper",
-		HMACKey: "dev-hmac-key",
+		Port:     3000,
+		Env:      "dev",
+		Pepper:   "dev-pepper",
+		HMACKey:  "dev-hmac-key",
+		Database: DefaultPostgresConfig(),
 	}
 }

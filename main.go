@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"go-web-dev/controllers"
 	"go-web-dev/middleware"
@@ -13,11 +14,13 @@ import (
 )
 
 func main() {
-	appConfig := DefaultAppConfig()
-	dbConfig := DefaultPostgresConfig()
+	prodFlag := flag.Bool("prod", false, "Set to true in production. This ensures that a config file is provided.")
+	flag.Parse()
+
+	appConfig := LoadConfig(*prodFlag)
 
 	services, err := models.NewServices(
-		models.WithGormDB(dbConfig.Dialect(), dbConfig.ConnectionString()),
+		models.WithGormDB(appConfig.Database.Dialect(), appConfig.Database.ConnectionString()),
 		models.WithDBLogMode(!appConfig.IsProd()),
 		models.WithGalleryService(),
 		models.WithUserService(appConfig.Pepper, appConfig.HMACKey),

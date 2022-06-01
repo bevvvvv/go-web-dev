@@ -8,6 +8,9 @@
         <div class="panel-body">
             {{template "loginForm"}}
         </div>
+        <div class="panel-footer">
+          <a href="/signup">Create new account</a>
+        </div>
     </div>
   </div>
 </div>
@@ -23,7 +26,8 @@
   <div class="form-group">
     <label for="password">Password</label>
     <input type="password" name="password" class="form-control" id="password" placeholder="Password">
-  </div>
+  </div>  
   <button type="submit" class="btn btn-primary">Login</button>
+  <a class="btn btn-link" href="/password/forgot" role="button">Forgot Password</a>
 </form>
 {{end}}

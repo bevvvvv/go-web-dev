@@ -179,8 +179,7 @@ func (userController *UserController) InitiateReset(w http.ResponseWriter, r *ht
 		return
 	}
 
-	// TODO: Password reset email
-	_ = token
+	go userController.emailClient.SendResetPasswordMessage(user.Name, user.Email, token)
 
 	views.RedirectAlert(w, r, "/password/reset", http.StatusFound, views.Alert{
 		Level:   views.AlertLevelSuccess,

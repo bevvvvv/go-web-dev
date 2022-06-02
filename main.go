@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
+	"golang.org/x/oauth2"
 )
 
 func main() {
@@ -50,6 +51,28 @@ func main() {
 	userVerification := middleware.UserVerification{
 		UserExists: userExists,
 	}
+
+	dropboxOAuthConf := &oauth2.Config{
+		ClientID:     appConfig.Dropbox.ID,
+		ClientSecret: appConfig.Dropbox.Secret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  appConfig.Dropbox.AuthURL,
+			TokenURL: appConfig.Dropbox.TokenURL,
+		},
+		RedirectURL: "http://localhost:3000/oauth/dropbox/callback",
+	}
+	dropboxRedirect := func(w http.ResponseWriter, r *http.Request) {
+		state := csrf.Token(r)
+		url := dropboxOAuthConf.AuthCodeURL(state)
+		fmt.Println(state)
+		http.Redirect(w, r, url, http.StatusFound)
+	}
+	r.HandleFunc("/oauth/dropbox/connect", dropboxRedirect).Methods("GET")
+	dropboxCallback := func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		fmt.Fprintln(w, "code", r.FormValue("code"), "state", r.FormValue("state"))
+	}
+	r.HandleFunc("/oauth/dropbox/callback", dropboxCallback).Methods("GET")
 
 	// create mux router - routes requests to controllers
 	r.Handle("/", staticController.HomeView).Methods("GET")

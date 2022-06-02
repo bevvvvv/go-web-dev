@@ -8,3 +8,4 @@ go get github.com/pilu/fresh
 go get -u github.com/gorilla/mux
 go get -u github.com/lib/pq
 go get -u golang.org/x/crypto/bcrypt
+go get -u golang.org/x/oauth2

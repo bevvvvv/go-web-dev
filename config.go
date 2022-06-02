@@ -75,8 +75,8 @@ func DefaultAppConfig() AppConfig {
 }
 
 type OAuthConfig struct {
-	ID       string `json:"app_key"`
-	Secret   string `json:"app_secret"`
+	ID       string `json:"id"`
+	Secret   string `json:"secret"`
 	AuthURL  string `json:"auth_url"`
 	TokenURL string `json:"token_url"`
 }

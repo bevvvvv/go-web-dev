@@ -13,5 +13,10 @@
     "mailgun": {
         "public_api_key": "pubkey-dab3e3fd5bac59a77c4fc649db3b2fc9",
         "domain": "sandboxfeb2a61a15e540e89876ab0c4c26a096.mailgun.org"
+    },
+    "dropbox": {
+        "app_key": "bb2yu9hqncmz126",
+        "auth_url": "https://www.dropbox.com/oauth2/authorize",
+        "token_url": "https://api.dropboxapi.com/oauth2/token"
     }
 }

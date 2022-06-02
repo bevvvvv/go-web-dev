@@ -29,9 +29,13 @@ func LoadConfig(required bool, dbEnv bool) AppConfig {
 	}
 
 	// anyone with access can use account
-	appConfig.Mailgun.APIKey = os.Getenv("API_KEY")
+	appConfig.Mailgun.APIKey = os.Getenv("MAILGUN_PRIVATE_KEY")
 	if appConfig.Mailgun.APIKey == "" {
-		panic(errors.New("No API key provided for mailgun client!"))
+		panic(errors.New("no API key provided for mailgun client"))
+	}
+	appConfig.Dropbox.Secret = os.Getenv("DROPBOX_SECRET")
+	if appConfig.Dropbox.Secret == "" {
+		panic(errors.New("no app secret provided for dropbox"))
 	}
 	if dbEnv {
 		appConfig.Database.Host = os.Getenv("DATABASE_HOST")
@@ -52,6 +56,7 @@ type AppConfig struct {
 	Pepper   string         `json:"pepper"`
 	HMACKey  string         `json:"hmac_key"`
 	Mailgun  MailgunConfig  `json:"mailgun"`
+	Dropbox  OAuthConfig    `json:"dropbox"`
 	Database PostgresConfig `json:"database"`
 }
 
@@ -67,6 +72,13 @@ func DefaultAppConfig() AppConfig {
 		HMACKey:  "dev-hmac-key",
 		Database: DefaultPostgresConfig(),
 	}
+}
+
+type OAuthConfig struct {
+	ID       string `json:"app_key"`
+	Secret   string `json:"app_secret"`
+	AuthURL  string `json:"auth_url"`
+	TokenURL string `json:"token_url"`
 }
 
 type MailgunConfig struct {

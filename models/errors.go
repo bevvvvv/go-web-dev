@@ -17,6 +17,7 @@ var (
 	ErrRequiredTitle        modelError   = "models: Title is required"
 	ErrInvalidResetToken    modelError   = "models: Token provided is not valid"
 	ErrExpiredResetToken    modelError   = "models: Token provided has expired"
+	ErrRequiredServiceName  privateError = "models: Service name is required"
 )
 
 type modelError string

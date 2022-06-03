@@ -1,14 +1,20 @@
 package main
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
+	fakecontext "go-web-dev/context"
 	"go-web-dev/controllers"
 	"go-web-dev/email"
 	"go-web-dev/middleware"
 	"go-web-dev/models"
 	"go-web-dev/rand"
+	"io"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
@@ -25,6 +31,7 @@ func main() {
 	services, err := models.NewServices(
 		models.WithGormDB(appConfig.Database.Dialect(), appConfig.Database.ConnectionString()),
 		models.WithDBLogMode(!appConfig.IsProd()),
+		models.WithOAuthService(),
 		models.WithGalleryService(),
 		models.WithUserService(appConfig.Pepper, appConfig.HMACKey),
 		models.WithImageService(),
@@ -63,16 +70,101 @@ func main() {
 	}
 	dropboxRedirect := func(w http.ResponseWriter, r *http.Request) {
 		state := csrf.Token(r)
+
+		cookie := http.Cookie{
+			Name:     "oauth_state",
+			Value:    state,
+			HttpOnly: true,
+		}
+		http.SetCookie(w, &cookie)
+
 		url := dropboxOAuthConf.AuthCodeURL(state)
-		fmt.Println(state)
 		http.Redirect(w, r, url, http.StatusFound)
 	}
-	r.HandleFunc("/oauth/dropbox/connect", dropboxRedirect).Methods("GET")
+	r.HandleFunc("/oauth/dropbox/connect", userVerification.ApplyFn(dropboxRedirect)).Methods("GET")
 	dropboxCallback := func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
-		fmt.Fprintln(w, "code", r.FormValue("code"), "state", r.FormValue("state"))
+		state := r.FormValue("state")
+		cookie, err := r.Cookie("oauth_state")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		} else if cookie == nil || cookie.Value != state {
+			http.Error(w, "invalid state provided", http.StatusBadRequest)
+		}
+		cookie.Value = ""
+		cookie.Expires = time.Now()
+		http.SetCookie(w, cookie)
+
+		code := r.FormValue("code")
+		token, err := dropboxOAuthConf.Exchange(context.TODO(), code)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		fmt.Fprintf(w, "%+v", token)
+
+		user := fakecontext.User(r.Context())
+
+		existing, err := services.OAuth.Find(user.ID, models.OAuthDropbox)
+		if err == nil {
+			services.OAuth.Delete(existing.ID)
+		} else if err != models.ErrNotFound {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		userOAuth := models.OAuth{
+			UserID:      user.ID,
+			ServiceName: models.OAuthDropbox,
+			Token:       *token,
+		}
+		err = services.OAuth.Create(&userOAuth)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
-	r.HandleFunc("/oauth/dropbox/callback", dropboxCallback).Methods("GET")
+	r.HandleFunc("/oauth/dropbox/callback", userVerification.ApplyFn(dropboxCallback)).Methods("GET")
+
+	dropboxQuery := func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		path := r.FormValue("path")
+
+		user := fakecontext.User(r.Context())
+		userOAuth, err := services.OAuth.Find(user.ID, models.OAuthDropbox)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		token := userOAuth.Token
+
+		data := struct {
+			Path string `json:"path"`
+		}{
+			Path: path,
+		}
+		dataBytes, err := json.Marshal(data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		request, err := http.NewRequest(http.MethodPost, "https://api.dropboxapi.com/2/files/list_folder", bytes.NewReader(dataBytes))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		request.Header.Add("Content-Type", "application/json")
+
+		client := dropboxOAuthConf.Client(context.TODO(), &token)
+		response, err := client.Do(request)
+		if err != nil {
+			http.Error(w, err.Error(), response.StatusCode)
+			return
+		}
+		defer response.Body.Close()
+
+		io.Copy(w, response.Body)
+	}
+	r.HandleFunc("/oauth/dropbox/test", userVerification.ApplyFn(dropboxQuery)).Methods("GET")
 
 	// create mux router - routes requests to controllers
 	r.Handle("/", staticController.HomeView).Methods("GET")

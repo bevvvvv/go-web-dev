@@ -6,6 +6,7 @@ import (
 )
 
 type Services struct {
+	OAuth   OAuthService
 	Gallery GalleryService
 	User    UserService
 	Image   ImageService
@@ -28,6 +29,13 @@ func WithGormDB(dialect string, connectionInfo string) ServicesConfig {
 func WithDBLogMode(mode bool) ServicesConfig {
 	return func(services *Services) error {
 		services.db.LogMode(mode)
+		return nil
+	}
+}
+
+func WithOAuthService() ServicesConfig {
+	return func(services *Services) error {
+		services.OAuth = NewOAuthService(services.db)
 		return nil
 	}
 }
@@ -69,11 +77,11 @@ func (services *Services) Close() error {
 }
 
 func (services *Services) AutoMigrate() error {
-	return services.db.AutoMigrate(&User{}, &Gallery{}, &pwReset{}).Error
+	return services.db.AutoMigrate(&User{}, &Gallery{}, &pwReset{}, &OAuth{}).Error
 }
 
 func (services *Services) DestructiveReset() error {
-	if err := services.db.DropTableIfExists(&User{}, &Gallery{}, &pwReset{}).Error; err != nil {
+	if err := services.db.DropTableIfExists(&User{}, &Gallery{}, &pwReset{}, &OAuth{}).Error; err != nil {
 		return err
 	}
 	return services.AutoMigrate()

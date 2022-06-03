@@ -13,22 +13,30 @@ import (
 	fakecontext "go-web-dev/context"
 
 	"github.com/gorilla/csrf"
+	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
 )
 
-func NewOAuthController(oauthService models.OAuthService, dropboxOAuthConf *oauth2.Config) *OAuthController {
+func NewOAuthController(oauthService models.OAuthService, configs map[string]*oauth2.Config) *OAuthController {
 	return &OAuthController{
-		oauthService:     oauthService,
-		dropboxOAuthConf: dropboxOAuthConf,
+		oauthService: oauthService,
+		configs:      configs,
 	}
 }
 
 type OAuthController struct {
-	oauthService     models.OAuthService
-	dropboxOAuthConf *oauth2.Config
+	oauthService models.OAuthService
+	configs      map[string]*oauth2.Config
 }
 
-func (oauthController *OAuthController) DropboxConnect(w http.ResponseWriter, r *http.Request) {
+func (oauthController *OAuthController) Connect(w http.ResponseWriter, r *http.Request) {
+	serviceName := mux.Vars(r)["service_name"]
+	oAuthConfig, ok := oauthController.configs[serviceName]
+	if !ok {
+		http.Error(w, "invalid OAuth2 service", http.StatusBadRequest)
+		return
+	}
+
 	state := csrf.Token(r)
 
 	cookie := http.Cookie{
@@ -38,11 +46,18 @@ func (oauthController *OAuthController) DropboxConnect(w http.ResponseWriter, r 
 	}
 	http.SetCookie(w, &cookie)
 
-	url := oauthController.dropboxOAuthConf.AuthCodeURL(state)
+	url := oAuthConfig.AuthCodeURL(state)
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func (oauthController *OAuthController) DropboxCallback(w http.ResponseWriter, r *http.Request) {
+func (oauthController *OAuthController) Callback(w http.ResponseWriter, r *http.Request) {
+	serviceName := mux.Vars(r)["service_name"]
+	oAuthConfig, ok := oauthController.configs[serviceName]
+	if !ok {
+		http.Error(w, "invalid OAuth2 service", http.StatusBadRequest)
+		return
+	}
+
 	r.ParseForm()
 	state := r.FormValue("state")
 	cookie, err := r.Cookie("oauth_state")
@@ -56,7 +71,7 @@ func (oauthController *OAuthController) DropboxCallback(w http.ResponseWriter, r
 	http.SetCookie(w, cookie)
 
 	code := r.FormValue("code")
-	token, err := oauthController.dropboxOAuthConf.Exchange(context.TODO(), code)
+	token, err := oAuthConfig.Exchange(context.TODO(), code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -65,7 +80,7 @@ func (oauthController *OAuthController) DropboxCallback(w http.ResponseWriter, r
 
 	user := fakecontext.User(r.Context())
 
-	existing, err := oauthController.oauthService.Find(user.ID, models.OAuthDropbox)
+	existing, err := oauthController.oauthService.Find(user.ID, serviceName)
 	if err == nil {
 		oauthController.oauthService.Delete(existing.ID)
 	} else if err != models.ErrNotFound {
@@ -75,7 +90,7 @@ func (oauthController *OAuthController) DropboxCallback(w http.ResponseWriter, r
 
 	userOAuth := models.OAuth{
 		UserID:      user.ID,
-		ServiceName: models.OAuthDropbox,
+		ServiceName: serviceName,
 		Token:       *token,
 	}
 	err = oauthController.oauthService.Create(&userOAuth)
@@ -113,7 +128,7 @@ func (oauthController *OAuthController) DropboxTest(w http.ResponseWriter, r *ht
 	}
 	request.Header.Add("Content-Type", "application/json")
 
-	client := oauthController.dropboxOAuthConf.Client(context.TODO(), &token)
+	client := oauthController.configs[models.OAuthDropbox].Client(context.TODO(), &token)
 	response, err := client.Do(request)
 	if err != nil {
 		http.Error(w, err.Error(), response.StatusCode)

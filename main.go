@@ -48,11 +48,13 @@ func main() {
 		},
 		RedirectURL: "http://localhost:3000/oauth/dropbox/callback",
 	}
+	configs := make(map[string]*oauth2.Config)
+	configs[models.OAuthDropbox] = dropboxOAuthConf
 
 	// init controllers
 	r := mux.NewRouter()
 	staticController := controllers.NewStaticController()
-	oauthController := controllers.NewOAuthController(services.OAuth, dropboxOAuthConf)
+	oauthController := controllers.NewOAuthController(services.OAuth, configs)
 	userController := controllers.NewUserController(services.User, emailClient)
 	galleriesController := controllers.NewGalleryController(services.Gallery, services.Image, r)
 
@@ -78,8 +80,8 @@ func main() {
 	r.HandleFunc("/password/reset", userController.ResetPassword).Methods("GET")
 	r.HandleFunc("/password/reset", userController.PerformReset).Methods("POST")
 	// dropbox
-	r.HandleFunc("/oauth/dropbox/connect", userVerification.ApplyFn(oauthController.DropboxConnect)).Methods("GET")
-	r.HandleFunc("/oauth/dropbox/callback", userVerification.ApplyFn(oauthController.DropboxCallback)).Methods("GET")
+	r.HandleFunc("/oauth/{service_name:[A-Za-z0-9]+}/connect", userVerification.ApplyFn(oauthController.Connect)).Methods("GET")
+	r.HandleFunc("/oauth/{service_name:[A-Za-z0-9]+}/callback", userVerification.ApplyFn(oauthController.Callback)).Methods("GET")
 	r.HandleFunc("/oauth/dropbox/test", userVerification.ApplyFn(oauthController.DropboxTest)).Methods("GET")
 	// galleries
 	r.Handle("/galleries/new", userVerification.Apply(galleriesController.NewView)).Methods("GET")

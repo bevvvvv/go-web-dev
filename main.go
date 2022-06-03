@@ -39,7 +39,8 @@ func main() {
 
 	emailClient := email.NewClient(email.WithMailgun(appConfig.Mailgun.APIKey, appConfig.Mailgun.PublicAPIKey, appConfig.Mailgun.Domain))
 
-	dropboxOAuthConf := &oauth2.Config{
+	configs := make(map[string]*oauth2.Config)
+	configs[models.OAuthDropbox] = &oauth2.Config{
 		ClientID:     appConfig.Dropbox.ID,
 		ClientSecret: appConfig.Dropbox.Secret,
 		Endpoint: oauth2.Endpoint{
@@ -48,8 +49,6 @@ func main() {
 		},
 		RedirectURL: "http://localhost:3000/oauth/dropbox/callback",
 	}
-	configs := make(map[string]*oauth2.Config)
-	configs[models.OAuthDropbox] = dropboxOAuthConf
 
 	// init controllers
 	r := mux.NewRouter()

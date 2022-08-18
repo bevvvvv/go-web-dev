@@ -18,6 +18,8 @@ import (
 
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -76,7 +78,7 @@ func main() {
 	}
 
 	// opentelemetry middleware
-	tp, err := initTracer()
+	tp, err := initTracer(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -131,13 +133,23 @@ func main() {
 	http.ListenAndServe(fmt.Sprintf(":%d", appConfig.Port), csrfMiddleware(userExists.Apply(r)))
 }
 
-func initTracer() (*sdktrace.TracerProvider, error) {
+func initTracer(ctx context.Context) (*sdktrace.TracerProvider, error) {
+	client := otlptracehttp.NewClient(
+		otlptracehttp.WithEndpoint("35.225.102.64:55681"),
+		otlptracehttp.WithInsecure(),
+	)
+	httpexporter, err := otlptrace.New(ctx, client)
+	if err != nil {
+		return nil, fmt.Errorf("creating OTLP trace exporter: %w", err)
+	}
+
 	exporter, err := stdout.New(stdout.WithPrettyPrint())
 	if err != nil {
 		return nil, err
 	}
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithBatcher(httpexporter),
 		sdktrace.WithBatcher(exporter),
 	)
 	otel.SetTracerProvider(tp)

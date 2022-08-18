@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"go-web-dev/controllers"
@@ -8,12 +9,21 @@ import (
 	"go-web-dev/middleware"
 	"go-web-dev/models"
 	"go-web-dev/rand"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"golang.org/x/oauth2"
+
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/otel"
+	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
+
+var tracer = otel.Tracer("go-web-dev")
 
 func main() {
 	prodFlag := flag.Bool("prod", false, "Set to true in production. This ensures that a config file is provided.")
@@ -65,6 +75,18 @@ func main() {
 		UserExists: userExists,
 	}
 
+	// opentelemetry middleware
+	tp, err := initTracer()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			log.Printf("Error shutting down tracer provider: %v", err)
+		}
+	}()
+	r.Use(otelmux.Middleware("test-server"))
+
 	// create mux router - routes requests to controllers
 	r.Handle("/", staticController.HomeView).Methods("GET")
 	r.Handle("/contact", staticController.ContactView).Methods("GET")
@@ -107,4 +129,18 @@ func main() {
 
 	fmt.Printf("Starting the server at :%d...", appConfig.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", appConfig.Port), csrfMiddleware(userExists.Apply(r)))
+}
+
+func initTracer() (*sdktrace.TracerProvider, error) {
+	exporter, err := stdout.New(stdout.WithPrettyPrint())
+	if err != nil {
+		return nil, err
+	}
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithBatcher(exporter),
+	)
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+	return tp, nil
 }

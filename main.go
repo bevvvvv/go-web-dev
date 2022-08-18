@@ -22,7 +22,9 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 )
 
 var tracer = otel.Tracer("go-web-dev")
@@ -151,8 +153,20 @@ func initTracer(ctx context.Context) (*sdktrace.TracerProvider, error) {
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithBatcher(httpexporter),
 		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(newResource()),
 	)
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 	return tp, nil
+}
+
+func newResource() *resource.Resource {
+	return resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String("go-web-app"),
+		semconv.ServiceVersionKey.String("0.0.1"),
+		semconv.TelemetrySDKLanguageGo,
+		semconv.TelemetrySDKVersionKey.String("1.9.0"),
+		semconv.TelemetrySDKNameKey.String("opentelemetry"),
+	)
 }

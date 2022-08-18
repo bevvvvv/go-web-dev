@@ -1,8 +1,8 @@
 package models
 
 import (
-	"github.com/jinzhu/gorm"
 	"golang.org/x/oauth2"
+	"gorm.io/gorm"
 )
 
 const (

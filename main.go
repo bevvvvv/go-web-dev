@@ -47,7 +47,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer services.Close()
+	// defer services.Close()
 	// services.DestructiveReset()
 	services.AutoMigrate()
 
@@ -137,7 +137,7 @@ func main() {
 
 func initTracer(ctx context.Context) (*sdktrace.TracerProvider, error) {
 	client := otlptracehttp.NewClient(
-		otlptracehttp.WithEndpoint("35.225.102.64:55681"),
+		otlptracehttp.WithEndpoint("34.173.9.238:55681"),
 		otlptracehttp.WithInsecure(),
 	)
 	httpexporter, err := otlptrace.New(ctx, client)

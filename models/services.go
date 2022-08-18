@@ -1,8 +1,10 @@
 package models
 
 import (
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type Services struct {
@@ -17,9 +19,12 @@ type ServicesConfig func(*Services) error
 
 func WithGormDB(dialect string, connectionInfo string) ServicesConfig {
 	return func(services *Services) error {
-		db, err := gorm.Open(dialect, connectionInfo)
+		db, err := gorm.Open(postgres.Open(connectionInfo))
 		if err != nil {
 			return err
+		}
+		if err := db.Use(otelgorm.NewPlugin()); err != nil {
+			panic(err)
 		}
 		services.db = db
 		return nil
@@ -27,8 +32,14 @@ func WithGormDB(dialect string, connectionInfo string) ServicesConfig {
 }
 
 func WithDBLogMode(mode bool) ServicesConfig {
+	if mode {
+		return func(services *Services) error {
+			services.db.Logger = logger.Default.LogMode(logger.Info)
+			return nil
+		}
+	}
 	return func(services *Services) error {
-		services.db.LogMode(mode)
+		services.db.Logger = logger.Default.LogMode(logger.Silent)
 		return nil
 	}
 }
@@ -72,16 +83,16 @@ func NewServices(configs ...ServicesConfig) (*Services, error) {
 }
 
 // Closes the uGorm database connection
-func (services *Services) Close() error {
-	return services.db.Close()
-}
+// func (services *Services) Close() error {
+// 	return services.db.Close()
+// }
 
 func (services *Services) AutoMigrate() error {
-	return services.db.AutoMigrate(&User{}, &Gallery{}, &pwReset{}, &OAuth{}).Error
+	return services.db.AutoMigrate(&User{}, &Gallery{}, &pwReset{}, &OAuth{})
 }
 
 func (services *Services) DestructiveReset() error {
-	if err := services.db.DropTableIfExists(&User{}, &Gallery{}, &pwReset{}, &OAuth{}).Error; err != nil {
+	if err := services.db.Migrator().DropTable(&User{}, &Gallery{}, &pwReset{}, &OAuth{}); err != nil {
 		return err
 	}
 	return services.AutoMigrate()

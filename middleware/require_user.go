@@ -17,6 +17,7 @@ func (userExists *UserExists) Apply(next http.Handler) http.HandlerFunc {
 
 func (userExists *UserExists) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userExists.WithContext(r.Context())
 		// static assets are not blocked behind login
 		path := r.URL.Path
 		if strings.HasPrefix(path, "/assets/") || strings.HasPrefix(path, "/images/") {

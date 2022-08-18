@@ -1,14 +1,15 @@
 package models
 
 import (
+	"context"
 	"go-web-dev/hash"
 	"go-web-dev/rand"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 const (
@@ -34,6 +35,7 @@ type UserService interface {
 	Authenticate(email, password string) (*User, error)
 	InitiateReset(userID uint) (string, error)
 	PerformReset(token, newPassword string) (*User, error)
+	WithContext(ctx context.Context)
 	UserDB
 }
 
@@ -50,6 +52,10 @@ type userService struct {
 	UserDB
 	pwResetDB pwResetDB
 	pepper    string
+}
+
+func (uService *userService) WithContext(ctx context.Context) {
+	uService.UserDB.WithContext(ctx)
 }
 
 func (uService *userService) Authenticate(email, password string) (*User, error) {
@@ -341,6 +347,8 @@ type UserDB interface {
 	Update(user *User) error
 	Delete(id uint) error
 
+	WithContext(ctx context.Context)
+
 	// Methods for querying single users
 	ByID(id uint) (*User, error)
 	ByEmail(email string) (*User, error)
@@ -351,6 +359,10 @@ var _ UserDB = &userGorm{}
 
 type userGorm struct {
 	db *gorm.DB
+}
+
+func (uGorm *userGorm) WithContext(ctx context.Context) {
+	uGorm.db = uGorm.db.WithContext(ctx)
 }
 
 func (uGorm *userGorm) Create(user *User) error {

@@ -4,7 +4,7 @@ import (
 	"go-web-dev/hash"
 	"go-web-dev/rand"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type pwReset struct {

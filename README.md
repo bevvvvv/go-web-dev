@@ -16,3 +16,8 @@ An awesome photo gallery application written in Go!
 * DATABASE_USER
 * DATABASE_PASSWORD
 * DATABASE_NAME
+
+## Secret Variables Required
+
+* MAILGUN_PRIVATE_KEY
+* DROPBOX_SECRET

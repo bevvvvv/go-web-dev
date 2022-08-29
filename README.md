@@ -19,5 +19,7 @@ An awesome photo gallery application written in Go!
 
 ## Secret Variables Required
 
+**TODO** add in ability to inject during Jenkins build -> accept from config file.
+
 * MAILGUN_PRIVATE_KEY
 * DROPBOX_SECRET

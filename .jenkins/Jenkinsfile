@@ -14,6 +14,9 @@ pipeline {
     GOOS='windows'
     GOARCH='amd64'
     XDG_CACHE_HOME='/tmp/.cache'
+    // jenkins managed credential
+    CREDENTIALS_ID='blitz-esports'
+    GCS_BUCKET='jenkins-poc'
   } 
 
   stages {
@@ -28,22 +31,26 @@ pipeline {
 
     stage("Build") {
       steps {
+        // build
         sh "go build -o build/ go-web-dev"
         sh "mkdir -p build/images/galleries"
+        // copy static assets
         sh "cp -r ./config build/"
         sh "cp -r ./views build/"
         sh "rm build/views/*.go"
+        // compress artifact
         sh "mv build go-web-dev"
         sh "tar -czf \"go-web-dev_${GOOS}_${GOARCH}.tar.gz\" go-web-dev"
-        sh "ls"
-        sh "ls go-web-dev"
       }
     }
 
     stage("Deploy") {
       steps {
-        echo "This is Stage 3.. TODO upload to GCS"
+        // store in jenkkins
         archiveArtifacts artifacts: '**/go-web-dev*.tar.gz', allowEmptyArchive: false
+        // store in GCS w/ plugin
+        step([$class: 'ClassicUploadStep', credentialsId: env.CREDENTIALS_ID,  bucket: "gs://${env.BUCKET}",
+                 pattern: '**/go-web-dev*.tar.gz'])
       }
     }
   }

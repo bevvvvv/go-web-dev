@@ -16,7 +16,7 @@ pipeline {
     XDG_CACHE_HOME='/tmp/.cache'
     // jenkins managed credential
     CREDENTIALS_ID='blitz-esports'
-    GCS_BUCKET='jenkins-poc'
+    GCS_BUCKET='gs://jenkins-poc/go-web-dev'
   } 
 
   stages {
@@ -49,7 +49,7 @@ pipeline {
         // store in jenkkins
         archiveArtifacts artifacts: '**/go-web-dev*.tar.gz', allowEmptyArchive: false
         // store in GCS w/ plugin
-        step([$class: 'ClassicUploadStep', credentialsId: env.CREDENTIALS_ID,  bucket: "gs://${env.BUCKET}",
+        step([$class: 'ClassicUploadStep', credentialsId: env.CREDENTIALS_ID,  bucket: "${env.BUCKET}",
                  pattern: '**/go-web-dev*.tar.gz'])
       }
     }

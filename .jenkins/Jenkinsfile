@@ -56,7 +56,7 @@ pipeline {
                  pattern: '**/go-web-dev*.tar.gz'])
         // store in S3 w/ plugin
         s3Upload profileName: 'jeknins-poc', entries: [
-            {bucket: "${env.S3_RELEASE_BUCKET}", sourceFile: "**/go-web-dev*.tar.gz", managedArtifacts: true}
+            [bucket: "${env.S3_RELEASE_BUCKET}", sourceFile: "**/go-web-dev*.tar.gz", managedArtifacts: true]
         ]
       }
     }

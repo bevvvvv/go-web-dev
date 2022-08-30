@@ -17,6 +17,7 @@ pipeline {
     // jenkins managed credential
     CREDENTIALS_ID='blitz-esports'
     GCS_BUCKET='jenkins-poc/go-web-dev'
+    S3_RELEASE_BUCKET='blitz-releases/jenkins-poc'
   } 
 
   stages {
@@ -44,6 +45,8 @@ pipeline {
       }
     }
 
+    // Test step could go here.
+
     stage("Deploy") {
       steps {
         // store in jenkkins
@@ -51,6 +54,8 @@ pipeline {
         // store in GCS w/ plugin
         step([$class: 'ClassicUploadStep', credentialsId: env.CREDENTIALS_ID,  bucket: "gs://${env.GCS_BUCKET}",
                  pattern: '**/go-web-dev*.tar.gz'])
+        // store in S3 w/ plugin
+        s3Upload(bucket:"${env.S3_RELEASE_BUCKET}", sourceFile:"**/go-web-dev*.tar.gz", managedArtifacts:true);
       }
     }
   }

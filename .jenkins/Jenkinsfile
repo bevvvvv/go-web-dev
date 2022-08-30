@@ -11,8 +11,8 @@ pipeline {
   }
 
   environment {
-    GOOS=windows
-    GOARCH=amd64
+    GOOS='windows'
+    GOARCH='amd64'
   } 
 
   stages {

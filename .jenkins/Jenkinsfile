@@ -1,22 +1,46 @@
 pipeline {
-  agent any
+  agent{
+    // dockerfile {
+    //     filename 'Dockerfile'
+    //     label 'docker'
+    // }
+    docker {
+        image 'golang:1.18-alpine'
+        label 'docker'
+    }
+  }
+
+  environment {
+    GOOS=windows
+    GOARCH=amd64
+  } 
 
   stages {
-    stage("Stage 1") {
+    stage("Test Environment") {
       steps {
-        echo "This is Stage 1"
+        echo "Golang OS: ${GOOS}"
+        echo "Golang Arch: ${GOARCH}"
       }
     }
 
-    stage("Stage 2") {
+    stage("Build") {
       steps {
-        echo "This is Stage 2"
+        sh "go build -o build/ go-web-dev"
+        sh "mkdir -p build/images/galleries"
+        sh "cp -r ./config build/"
+        sh "cp -r ./views build/"
+        sh "rm build/views/*.go"
+        sh "mv build go-web-dev"
+        sh "tar -czf \"go-web-dev_${GOOS}_${GOARCH}.tar.gz\" go-web-dev"
+        sh "ls"
+        sh "ls build/"
       }
     }
 
-    stage("Stage 3") {
+    stage("Deploy") {
       steps {
-        echo "This is Stage 3"
+        echo "This is Stage 3.. TODO upload to GCS"
+        archiveArtifacts artifacts: '**/go-web-dev*.tar.gz', allowEmptyArchive: false
       }
     }
   }

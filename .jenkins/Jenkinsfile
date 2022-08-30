@@ -55,11 +55,11 @@ pipeline {
         step([$class: 'ClassicUploadStep', credentialsId: env.CREDENTIALS_ID,  bucket: "gs://${env.GCS_BUCKET}",
                  pattern: '**/go-web-dev*.tar.gz'])
         // store in S3 w/ plugin
-        s3Upload profileName: 'jeknins-poc', entries: {
+        s3Upload profileName: 'jeknins-poc', entries: [{
             bucket: "${env.S3_RELEASE_BUCKET}",
             sourceFile: "**/go-web-dev*.tar.gz",
             managedArtifacts: true
-        }
+        }]
       }
     }
   }

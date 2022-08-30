@@ -56,11 +56,14 @@ pipeline {
         step([$class: 'ClassicUploadStep', credentialsId: env.CREDENTIALS_ID,  bucket: "gs://${env.GCS_BUCKET}",
                  pattern: '**/go-web-dev*.tar.gz'])
         // store in S3 w/ plugin
-        withAWS(region:'us-west-2',credentials:"${IAM_CREDENTIALS_ID}") {
+        // all examples online in script format
+        script {
+            withAWS(region:'us-west-2',credentials:"${IAM_CREDENTIALS_ID}") {
                     def identity=awsIdentity();
                 // Upload files from working directory to project workspace
                 s3Upload(bucket:"${S3_RELEASE_BUCKET}", includePathPattern:'**/go-web-dev*.tar.gz');
             }
+        }
       }
     }
   }

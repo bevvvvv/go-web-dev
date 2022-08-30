@@ -17,10 +17,12 @@ pipeline {
   } 
 
   stages {
-    stage("Test Environment") {
+    stage("Setup Environment") {
       steps {
         echo "Golang OS: ${GOOS}"
         echo "Golang Arch: ${GOARCH}"
+        // remove previous build dir, if exists
+        sh "rm -rf go-web-dev"
       }
     }
 

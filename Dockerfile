@@ -11,10 +11,11 @@ VOLUME $GOPATH/go-web-dev/config
 RUN go build -o build/ go-web-dev & \
     mkdir -p build/images/galleries & \
     cp -r ./config build/ & \
-    cp -r ./views build/ & \
-    rm build/views/*.go & \
-    mv build go-web-dev & \
-    tar -czf "go-web-dev_${GOOS}_${GOARCH}.tar.gz" go-web-dev
+    cp -r ./views build/
+    # & \
+    #rm build/views/*.go & \
+    #mv build go-web-dev & \
+    #tar -czf "go-web-dev_${GOOS}_${GOARCH}.tar.gz" go-web-dev
 
 RUN echo $GOOS
 RUN ls

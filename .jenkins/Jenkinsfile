@@ -26,8 +26,9 @@ pipeline {
 
     stage("Build") {
       steps {
-        sh "go build -o build/ go-web-dev"
-        sh "mkdir -p build/images/galleries"
+        sh 'echo $(pwd)'
+        sh "go build -o ./build/ go-web-dev"
+        sh "mkdir -p ./build/images/galleries"
         sh "cp -r ./config build/"
         sh "cp -r ./views build/"
         sh "rm build/views/*.go"

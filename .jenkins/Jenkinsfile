@@ -27,6 +27,7 @@ pipeline {
       steps {
         echo "Golang OS: ${GOOS}"
         echo "Golang Arch: ${GOARCH}"
+        sh "echo $(whoami)"
         // remove previous build dir, if exists
         sh "rm -rf go-web-dev"
       }

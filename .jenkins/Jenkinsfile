@@ -7,6 +7,7 @@ pipeline {
     docker {
         image 'golang:1.18-alpine'
         label 'docker'
+        args '-u root:root'
     }
   }
 
